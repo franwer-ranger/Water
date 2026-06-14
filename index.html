@@ -4,44 +4,80 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
   <meta name="description" content="Mapa interactivo de las fuentes de agua potable de Madrid." />
-  <meta name="theme-color" content="#0a6cb0" />
+  <meta name="theme-color" content="#0085c7" />
   <title>Fuentes de agua potable de Madrid</title>
 
-  <!-- Leaflet + MarkerCluster (vendorizados, sin CDN en runtime) -->
-  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="vendor/markercluster/MarkerCluster.css" />
-  <link rel="stylesheet" href="vendor/markercluster/MarkerCluster.Default.css" />
+  <!-- MapLibre GL (vendorizado, sin CDN en runtime) -->
+  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header class="app-header">
+  <!-- Mapa a pantalla completa -->
+  <div id="map" role="application" aria-label="Mapa de fuentes de agua potable de Madrid"></div>
+
+  <!-- Barra superior (glass) -->
+  <header class="top-bar glass">
     <div class="brand">
       <span class="brand__icon" aria-hidden="true">💧</span>
-      <h1 class="brand__title">Fuentes de agua potable de Madrid</h1>
+      <div class="brand__text">
+        <h1 class="brand__title">Fuentes de Madrid</h1>
+        <span class="count" id="count" hidden></span>
+      </div>
     </div>
-    <span class="count-badge" id="count" hidden></span>
   </header>
 
-  <div class="map-wrap">
-    <div id="map" role="application" aria-label="Mapa de fuentes de agua potable de Madrid"></div>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-    <button type="button" id="locate-btn" class="fab" title="Buscar fuentes cerca de mí" aria-label="Buscar fuentes cerca de mí">
-      <span class="fab__icon" aria-hidden="true">📍</span>
-      <span class="fab__label">Cerca de mí</span>
+  <!-- Filtros por estado (botón + popover desplegable) -->
+  <div class="filter-menu" id="filter-menu">
+    <button type="button" class="filter-toggle glass" id="filter-toggle"
+            aria-expanded="false" aria-controls="filter-popover"
+            aria-label="Filtrar por estado">
+      <svg class="filter-toggle__icon" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+           stroke-linejoin="round" aria-hidden="true">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      </svg>
+      <span class="filter-toggle__label">Filtros</span>
+      <span class="filter-toggle__badge" id="filter-badge" hidden></span>
     </button>
 
-    <div class="legend">
-      <span class="legend__item"><span class="legend__dot legend__dot--ok"></span> Operativa</span>
-      <span class="legend__item"><span class="legend__dot legend__dot--warn"></span> Cerrada temporalmente</span>
-      <span class="legend__item"><span class="legend__dot legend__dot--off"></span> Fuera de servicio</span>
+    <div class="filter-popover glass" id="filter-popover" role="group"
+         aria-label="Filtrar por estado">
+      <button type="button" class="filter-opt is-active" data-cat="ok">
+        <span class="chip__dot chip__dot--ok"></span>
+        <span class="filter-opt__label">Operativas</span>
+        <span class="filter-opt__check" aria-hidden="true">✓</span>
+      </button>
+      <button type="button" class="filter-opt is-active" data-cat="warn">
+        <span class="chip__dot chip__dot--warn"></span>
+        <span class="filter-opt__label">Cerradas</span>
+        <span class="filter-opt__check" aria-hidden="true">✓</span>
+      </button>
+      <button type="button" class="filter-opt is-active" data-cat="off">
+        <span class="chip__dot chip__dot--off"></span>
+        <span class="filter-opt__label">Fuera de servicio</span>
+        <span class="filter-opt__check" aria-hidden="true">✓</span>
+      </button>
     </div>
   </div>
 
-  <!-- Librerías de mapa -->
-  <script src="vendor/leaflet/leaflet.js"></script>
-  <script src="vendor/markercluster/leaflet.markercluster.js"></script>
+  <!-- Mensajes transitorios -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Botón "Cerca de mí" -->
+  <button type="button" id="locate-btn" class="fab glass" title="Buscar fuentes cerca de mí" aria-label="Buscar fuentes cerca de mí">
+    <span class="fab__icon" aria-hidden="true">📍</span>
+    <span class="fab__label">Cerca de mí</span>
+  </button>
+
+  <!-- Panel de detalle (bottom sheet, glass) -->
+  <aside id="sheet" class="sheet glass" aria-label="Detalle de la fuente" hidden>
+    <button type="button" id="sheet-close" class="sheet__close" aria-label="Cerrar">&times;</button>
+    <div class="sheet__handle" aria-hidden="true"></div>
+    <div id="sheet-body"></div>
+  </aside>
+
+  <!-- Librería de mapa -->
+  <script src="vendor/maplibre/maplibre-gl.js"></script>
   <!-- Aplicación -->
   <script type="module" src="js/app.js"></script>
 </body>
