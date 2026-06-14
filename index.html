@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+  <meta name="description" content="Mapa interactivo de las fuentes de agua potable de Madrid." />
+  <title>Fuentes de agua potable de Madrid</title>
+
+  <!-- Leaflet + MarkerCluster (vendorizados, sin CDN en runtime) -->
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="vendor/markercluster/MarkerCluster.css" />
+  <link rel="stylesheet" href="vendor/markercluster/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-title">
+      <span class="app-title__icon" aria-hidden="true">💧</span>
+      Fuentes de agua potable de Madrid
+    </h1>
+    <p class="app-status" id="status" role="status">Cargando fuentes…</p>
+  </header>
+
+  <div id="map" role="application" aria-label="Mapa de fuentes de agua potable de Madrid"></div>
+
+  <button type="button" id="locate-btn" class="locate-btn" title="Buscar fuentes cerca de mí">
+    <span aria-hidden="true">📍</span>
+    <span class="locate-btn__label">Cerca de mí</span>
+  </button>
+
+  <div class="legend" aria-hidden="false">
+    <span class="legend__item"><span class="legend__dot legend__dot--ok"></span> Operativa</span>
+    <span class="legend__item"><span class="legend__dot legend__dot--warn"></span> Cerrada temporalmente</span>
+    <span class="legend__item"><span class="legend__dot legend__dot--off"></span> Fuera de servicio</span>
+  </div>
+
+  <!-- Librerías de mapa -->
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/markercluster/leaflet.markercluster.js"></script>
+  <!-- Aplicación -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+:root {
+  --color-ok: #2e9e5b;
+  --color-warn: #e08a1e;
+  --color-off: #c0392b;
+  --color-brand: #0a6cb0;
+  --header-h: 56px;
+  --shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Header */
+.app-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  min-height: var(--header-h);
+  background: var(--color-brand);
+  color: #fff;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.2;
+}
+
+.app-title__icon { font-size: 1.2rem; }
+
+.app-status {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+/* Map fills the rest of the viewport */
+#map {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+}
+
+/* "Near me" floating button */
+.locate-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 28px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-brand);
+  background: #fff;
+  border: none;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.locate-btn:hover { background: #f2f7fb; }
+.locate-btn:active { transform: translateY(1px); }
+.locate-btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* Legend */
+.legend {
+  position: absolute;
+  left: 12px;
+  bottom: 28px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.legend__item { display: flex; align-items: center; gap: 6px; }
+
+.legend__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.legend__dot--ok { background: var(--color-ok); }
+.legend__dot--warn { background: var(--color-warn); }
+.legend__dot--off { background: var(--color-off); }
+
+/* Fountain markers (divIcon) */
+.fuente-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.fuente-marker--ok { background: var(--color-ok); }
+.fuente-marker--warn { background: var(--color-warn); }
+.fuente-marker--off { background: var(--color-off); }
+
+/* User location marker */
+.user-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.4);
+}
+
+/* Popup content */
+.fuente-popup h3 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+}
+
+.fuente-popup p {
+  margin: 2px 0;
+  font-size: 0.86rem;
+}
+
+.fuente-popup .estado {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.estado--ok { background: var(--color-ok); }
+.estado--warn { background: var(--color-warn); }
+.estado--off { background: var(--color-off); }
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .app-title { font-size: 0.95rem; }
+  .app-status { font-size: 0.75rem; }
+  .locate-btn__label { display: none; }
+  .locate-btn { padding: 12px; border-radius: 50%; }
+  .legend { font-size: 0.7rem; padding: 6px 8px; }
+}
