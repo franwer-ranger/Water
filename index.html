@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
   <meta name="description" content="Mapa interactivo de las fuentes de agua potable de Madrid." />
+  <meta name="theme-color" content="#0a6cb0" />
   <title>Fuentes de agua potable de Madrid</title>
 
   <!-- Leaflet + MarkerCluster (vendorizados, sin CDN en runtime) -->
@@ -14,24 +15,28 @@
 </head>
 <body>
   <header class="app-header">
-    <h1 class="app-title">
-      <span class="app-title__icon" aria-hidden="true">💧</span>
-      Fuentes de agua potable de Madrid
-    </h1>
-    <p class="app-status" id="status" role="status">Cargando fuentes…</p>
+    <div class="brand">
+      <span class="brand__icon" aria-hidden="true">💧</span>
+      <h1 class="brand__title">Fuentes de agua potable de Madrid</h1>
+    </div>
+    <span class="count-badge" id="count" hidden></span>
   </header>
 
-  <div id="map" role="application" aria-label="Mapa de fuentes de agua potable de Madrid"></div>
+  <div class="map-wrap">
+    <div id="map" role="application" aria-label="Mapa de fuentes de agua potable de Madrid"></div>
 
-  <button type="button" id="locate-btn" class="locate-btn" title="Buscar fuentes cerca de mí">
-    <span aria-hidden="true">📍</span>
-    <span class="locate-btn__label">Cerca de mí</span>
-  </button>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <div class="legend" aria-hidden="false">
-    <span class="legend__item"><span class="legend__dot legend__dot--ok"></span> Operativa</span>
-    <span class="legend__item"><span class="legend__dot legend__dot--warn"></span> Cerrada temporalmente</span>
-    <span class="legend__item"><span class="legend__dot legend__dot--off"></span> Fuera de servicio</span>
+    <button type="button" id="locate-btn" class="fab" title="Buscar fuentes cerca de mí" aria-label="Buscar fuentes cerca de mí">
+      <span class="fab__icon" aria-hidden="true">📍</span>
+      <span class="fab__label">Cerca de mí</span>
+    </button>
+
+    <div class="legend">
+      <span class="legend__item"><span class="legend__dot legend__dot--ok"></span> Operativa</span>
+      <span class="legend__item"><span class="legend__dot legend__dot--warn"></span> Cerrada temporalmente</span>
+      <span class="legend__item"><span class="legend__dot legend__dot--off"></span> Fuera de servicio</span>
+    </div>
   </div>
 
   <!-- Librerías de mapa -->

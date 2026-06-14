@@ -2,22 +2,31 @@
 // Usa la API del navegador a través de map.locate() y gestiona el permiso denegado.
 
 let userMarker = null;
+let lastUserLatLng = null; // [lat, lng] de la última ubicación conocida
 
-export function setupGeolocation(map, button, setStatus) {
+// Devuelve la última ubicación del usuario como [lat, lng], o null si no hay.
+export function getUserLatLng() {
+  return lastUserLatLng;
+}
+
+export function setupGeolocation(map, button, showToast) {
   if (!button) return;
 
   button.addEventListener("click", () => {
     if (!("geolocation" in navigator)) {
-      setStatus("Tu navegador no permite geolocalización.");
+      showToast("Tu navegador no permite geolocalización.");
       return;
     }
     button.disabled = true;
-    setStatus("Buscando tu ubicación…");
+    button.classList.add("is-loading");
+    showToast("Buscando tu ubicación…");
     map.locate({ setView: true, maxZoom: 17, enableHighAccuracy: true });
   });
 
   map.on("locationfound", (e) => {
     button.disabled = false;
+    button.classList.remove("is-loading");
+    lastUserLatLng = [e.latlng.lat, e.latlng.lng];
     if (userMarker) {
       userMarker.setLatLng(e.latlng);
     } else {
@@ -32,15 +41,16 @@ export function setupGeolocation(map, button, setStatus) {
         interactive: false,
       }).addTo(map);
     }
-    setStatus("Mostrando fuentes cerca de tu ubicación.");
+    showToast("Mostrando fuentes cerca de tu ubicación.");
   });
 
   map.on("locationerror", (err) => {
     button.disabled = false;
+    button.classList.remove("is-loading");
     const msg =
       err.code === 1
         ? "Permiso de ubicación denegado."
         : "No se pudo obtener tu ubicación.";
-    setStatus(msg);
+    showToast(msg);
   });
 }

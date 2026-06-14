@@ -1,4 +1,5 @@
 import { CONFIG } from "./config.js";
+import { getUserLatLng } from "./geolocation.js";
 
 // Agrupa los estados del dataset en tres categorías visuales.
 function estadoCategoria(estado) {
@@ -30,19 +31,36 @@ function iconoPara(categoria) {
   return iconCache[categoria];
 }
 
+// URL de Google Maps con ruta a pie hasta la fuente. Si conocemos la ubicación
+// del usuario la usamos como origen; si no, Google usará la ubicación actual.
+function directionsUrl(lat, lng) {
+  const origin = getUserLatLng();
+  const o = origin ? `&origin=${origin[0]},${origin[1]}` : "";
+  return `https://www.google.com/maps/dir/?api=1${o}&destination=${lat},${lng}&travelmode=walking`;
+}
+
 // Construye el HTML del popup de forma perezosa (solo al abrirse).
-function popupHtml(props) {
+// coords viene del GeoJSON como [lon, lat].
+function popupHtml(props, coords) {
   const cat = estadoCategoria(props.estado);
   const estadoTxt = ESTADO_TEXTO[props.estado] || "Estado desconocido";
-  const partes = [];
-  partes.push('<div class="fuente-popup">');
-  partes.push("<h3>💧 Fuente de agua potable</h3>");
-  if (props.direccion) partes.push(`<p>${escapeHtml(props.direccion)}</p>`);
+  const parts = ['<div class="fuente-popup">'];
+  parts.push("<h3>💧 Fuente de agua potable</h3>");
+  if (props.direccion) parts.push(`<p>${escapeHtml(props.direccion)}</p>`);
   const zona = [props.barrio, props.distrito].filter(Boolean).join(" · ");
-  if (zona) partes.push(`<p>${escapeHtml(zona)}</p>`);
-  partes.push(`<span class="estado estado--${cat}">${estadoTxt}</span>`);
-  partes.push("</div>");
-  return partes.join("");
+  if (zona) parts.push(`<p class="fuente-popup__zona">${escapeHtml(zona)}</p>`);
+  parts.push(`<span class="estado estado--${cat}">${estadoTxt}</span>`);
+
+  // Botón "Cómo llegar" solo para fuentes operativas.
+  if (props.estado === "OPERATIVO") {
+    const url = directionsUrl(coords[1], coords[0]);
+    parts.push(
+      `<a class="popup-btn" href="${url}" target="_blank" rel="noopener">` +
+        '<span aria-hidden="true">🧭</span> Cómo llegar</a>'
+    );
+  }
+  parts.push("</div>");
+  return parts.join("");
 }
 
 function escapeHtml(str) {
@@ -64,7 +82,10 @@ export function buildFuentesLayer(geojson) {
       });
     },
     onEachFeature: (feature, layer) => {
-      layer.bindPopup(() => popupHtml(feature.properties));
+      layer.bindPopup(
+        () => popupHtml(feature.properties, feature.geometry.coordinates),
+        { closeButton: true }
+      );
     },
   });
 

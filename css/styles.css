@@ -3,8 +3,10 @@
   --color-warn: #e08a1e;
   --color-off: #c0392b;
   --color-brand: #0a6cb0;
-  --header-h: 56px;
-  --shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  --color-brand-2: #0a86c0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --radius: 12px;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -21,90 +23,143 @@ body {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
+  color: #1c2733;
 }
 
-/* Header */
+/* ---------- Header ---------- */
 .app-header {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 16px;
-  min-height: var(--header-h);
-  background: var(--color-brand);
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
   color: #fff;
   box-shadow: var(--shadow);
-  z-index: 1000;
+  z-index: 1100;
 }
 
-.app-title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
+.brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  line-height: 1.2;
+  gap: 10px;
+  min-width: 0; /* permite el ellipsis del título */
 }
 
-.app-title__icon { font-size: 1.2rem; }
+.brand__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex: 0 0 auto;
+}
 
-.app-status {
+.brand__title {
   margin: 0;
-  font-size: 0.85rem;
-  opacity: 0.95;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.2;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Map fills the rest of the viewport */
-#map {
+.count-badge {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+/* ---------- Map area ---------- */
+.map-wrap {
+  position: relative;
   flex: 1 1 auto;
-  width: 100%;
   min-height: 0;
 }
 
-/* "Near me" floating button */
-.locate-btn {
+#map {
   position: absolute;
-  right: 12px;
-  bottom: 28px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Toast (mensajes transitorios) ---------- */
+.toast {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  max-width: calc(100% - 24px);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(28, 39, 51, 0.92);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  text-align: center;
+}
+
+.toast:empty { display: none; }
+
+/* ---------- FAB "Cerca de mí" ---------- */
+.fab {
+  position: absolute;
+  right: 16px;
+  bottom: 32px;
   z-index: 1000;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 20px;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--color-brand);
   background: #fff;
   border: none;
-  border-radius: 24px;
-  box-shadow: var(--shadow);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.locate-btn:hover { background: #f2f7fb; }
-.locate-btn:active { transform: translateY(1px); }
-.locate-btn:disabled { opacity: 0.6; cursor: progress; }
+.fab:hover { background: #f1f7fb; }
+.fab:active { transform: scale(0.97); }
+.fab:disabled { cursor: progress; }
+.fab__icon { font-size: 1.1rem; line-height: 1; }
+.fab.is-loading .fab__icon { animation: pulse 1s ease-in-out infinite; }
 
-/* Legend */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ---------- Legend ---------- */
 .legend {
   position: absolute;
-  left: 12px;
-  bottom: 28px;
+  left: 16px;
+  bottom: 32px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 10px;
-  font-size: 0.78rem;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 8px;
+  gap: 5px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 10px;
   box-shadow: var(--shadow);
 }
 
-.legend__item { display: flex; align-items: center; gap: 6px; }
+.legend__item { display: flex; align-items: center; gap: 7px; }
 
 .legend__dot {
   width: 12px;
@@ -112,21 +167,24 @@ body {
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  flex: 0 0 auto;
 }
 
 .legend__dot--ok { background: var(--color-ok); }
 .legend__dot--warn { background: var(--color-warn); }
 .legend__dot--off { background: var(--color-off); }
 
-/* Fountain markers (divIcon) */
+/* ---------- Fountain markers (divIcon) ---------- */
 .fuente-marker {
   width: 16px;
   height: 16px;
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease;
 }
 
+.fuente-marker:hover { transform: scale(1.25); }
 .fuente-marker--ok { background: var(--color-ok); }
 .fuente-marker--warn { background: var(--color-warn); }
 .fuente-marker--off { background: var(--color-off); }
@@ -141,22 +199,31 @@ body {
   box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.4);
 }
 
-/* Popup content */
+/* ---------- Popup ---------- */
+.leaflet-popup-content { margin: 14px 16px; min-width: 180px; }
+
 .fuente-popup h3 {
-  margin: 0 0 6px;
-  font-size: 0.98rem;
+  margin: 0 0 8px;
+  font-size: 1rem;
 }
 
 .fuente-popup p {
   margin: 2px 0;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
+  color: #3a4856;
+}
+
+.fuente-popup__zona {
+  font-size: 0.8rem !important;
+  color: #6b7886 !important;
+  text-transform: capitalize;
 }
 
 .fuente-popup .estado {
   display: inline-block;
-  margin-top: 6px;
-  padding: 2px 8px;
-  border-radius: 12px;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
   color: #fff;
@@ -166,11 +233,45 @@ body {
 .estado--warn { background: var(--color-warn); }
 .estado--off { background: var(--color-off); }
 
-/* Mobile tweaks */
+.popup-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  background: var(--color-brand);
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.popup-btn:hover { background: #08588f; }
+
+/* ---------- Mobile ---------- */
 @media (max-width: 600px) {
-  .app-title { font-size: 0.95rem; }
-  .app-status { font-size: 0.75rem; }
-  .locate-btn__label { display: none; }
-  .locate-btn { padding: 12px; border-radius: 50%; }
-  .legend { font-size: 0.7rem; padding: 6px 8px; }
+  .brand__icon { font-size: 1.2rem; }
+  .brand__title { font-size: 0.98rem; }
+  .count-badge { font-size: 0.72rem; padding: 4px 9px; }
+
+  /* FAB perfectamente circular: solo icono */
+  .fab {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .fab__label { display: none; }
+  .fab__icon { font-size: 1.4rem; }
+
+  .legend { font-size: 0.72rem; padding: 8px 10px; bottom: 24px; left: 12px; }
+  .fab { bottom: 24px; right: 12px; }
+}
+
+/* Pantallas muy estrechas: deja respirar al título */
+@media (max-width: 360px) {
+  .count-badge { display: none; }
 }
