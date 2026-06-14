@@ -243,7 +243,7 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
-  color: #fff;
+  color: #fff !important;
   background: var(--color-brand);
   border-radius: 8px;
   transition: background 0.15s ease;
