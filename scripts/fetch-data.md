@@ -1,5 +1,24 @@
 # Cómo actualizar los datos de fuentes
 
+> **La actualización ahora es automática.** El workflow
+> [`update-data.yml`](../.github/workflows/update-data.yml) se ejecuta a diario a
+> las 05:00 UTC (también se puede lanzar a mano desde la pestaña *Actions* de
+> GitHub, vía `workflow_dispatch`), descarga el CSV oficial, regenera
+> `data/fuentes.geojson` y, si hay cambios, hace commit y dispara el
+> despliegue en GitHub Pages. El script que hace el trabajo es
+> [`scripts/update-data.mjs`](./update-data.mjs) (Node 22, sin dependencias).
+>
+> Uso local:
+>
+> ```sh
+> node scripts/update-data.mjs                        # descarga el CSV oficial y actualiza data/fuentes.geojson
+> node scripts/update-data.mjs --input fichero.csv     # usa un CSV local en vez de descargarlo (útil para depurar)
+> node scripts/update-data.mjs --min 100               # baja el umbral de la salvaguarda anti-CSV-roto (solo pruebas)
+> ```
+>
+> El resto de este documento describe el procedimiento **manual** y sirve
+> sobre todo como referencia del formato de origen y de salida.
+
 Los datos provienen del conjunto de datos abierto **"Fuentes de agua para beber"**
 del Ayuntamiento de Madrid:
 

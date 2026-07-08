@@ -1,0 +1,57 @@
+name: Update fountain data
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+# Evita ejecuciones solapadas de esta actualización.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Actualizar data/fuentes.geojson
+        run: node scripts/update-data.mjs
+
+      - name: Comprobar si hay cambios
+        id: cambios
+        run: |
+          if [ -n "$(git status --porcelain data/fuentes.geojson)" ]; then
+            echo "hay_cambios=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hay_cambios=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit y push
+        if: steps.cambios.outputs.hay_cambios == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fuentes.geojson
+          git commit -m "Update fountain data ($(date -u +%Y-%m-%d))"
+          git push origin HEAD:main
+
+      # Un push realizado con GITHUB_TOKEN no dispara otros workflows (incluye
+      # deploy.yml, que escucha "push" a main), así que hay que lanzar el
+      # despliegue de Pages explícitamente.
+      - name: Disparar despliegue en GitHub Pages
+        if: steps.cambios.outputs.hay_cambios == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
