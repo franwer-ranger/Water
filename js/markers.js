@@ -131,7 +131,10 @@ export function detailHtml(props, coords) {
     `<span class="estado estado--${cat}"><span class="estado__dot"></span>${estadoTxt}</span>`
   );
 
-  if (props.estado === "OPERATIVO") {
+  // El botón "Cómo llegar" se muestra en operativas y en cerradas
+  // temporalmente: este segundo estado no es fiable y muchas fuentes
+  // marcadas así están realmente abiertas.
+  if (cat === "ok" || cat === "warn") {
     const url = directionsUrl(coords[1], coords[0]);
     parts.push(
       `<a class="sheet__btn" href="${url}" target="_blank" rel="noopener">` +

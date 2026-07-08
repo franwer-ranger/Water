@@ -12,6 +12,8 @@ export function setupGeolocation(map, button, showToast) {
   if (!button) return;
 
   button.addEventListener("click", () => {
+    // Tras el primer uso ya no hace falta invitar al usuario a pulsar.
+    button.classList.add("fab--used");
     if (!("geolocation" in navigator)) {
       showToast("Tu navegador no permite geolocalización.");
       return;

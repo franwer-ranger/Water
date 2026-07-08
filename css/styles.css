@@ -330,6 +330,22 @@ body {
   }
 }
 
+/* Pulso suave e invitante del FAB en móvil (halo + escala mínima). */
+@keyframes fab-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 133, 199, 0.45);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(0, 133, 199, 0);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 133, 199, 0);
+    transform: scale(1);
+  }
+}
+
 /* ── Bottom sheet (detalle) ───────────────────────────────────────────────── */
 .sheet {
   position: fixed;
@@ -507,6 +523,11 @@ body {
     width: 56px;
     height: 56px;
     padding: 0;
+    animation: fab-pulse 2s ease-out infinite;
+  }
+  .fab.is-loading,
+  .fab.fab--used {
+    animation: none;
   }
   .fab__label {
     display: none;
@@ -533,5 +554,8 @@ body {
   .sheet {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
+  }
+  .fab {
+    animation: none;
   }
 }
