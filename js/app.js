@@ -1,18 +1,26 @@
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+
 import { CONFIG } from "./config.js";
-import { loadFuentes } from "./data.js";
-import {
-  addFuentesLayers,
-  detailHtml,
-  estadoCategoria,
-  SOURCE_ID,
-} from "./markers.js";
+import { loadArea, getAllFeatures } from "./data.js";
+import { addFuentesLayers, detailHtml, SOURCE_ID } from "./markers.js";
 import { setupGeolocation } from "./geolocation.js";
+import { setupSearch } from "./search.js";
+import { createStore } from "./store.js";
 
 const countEl = document.getElementById("count");
 const toastEl = document.getElementById("toast");
 const sheetEl = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
 let toastTimer;
+
+// Estado compartido: features cargadas y filtros de estado activos. Los
+// filtros solo aplican a fuentes con estado real; las 'unknown' (OSM)
+// siempre se muestran.
+const store = createStore({
+  features: [],
+  activeCats: new Set(["ok", "warn", "off"]),
+});
 
 // Mensajes transitorios sobre el mapa (carga, geolocalización, errores).
 function showToast(text, persist = false) {
@@ -51,7 +59,6 @@ function initMap() {
     zoom: CONFIG.zoom,
     minZoom: CONFIG.minZoom,
     maxZoom: CONFIG.maxZoom,
-    maxBounds: CONFIG.maxBounds,
     attributionControl: false,
     dragRotate: true,
   });
@@ -69,6 +76,75 @@ function initMap() {
   );
 
   return map;
+}
+
+// ── Render: aplica filtros y actualiza mapa + contador ──────────────────────
+function render(map, state) {
+  const source = map.getSource(SOURCE_ID);
+  if (!source) return;
+  const features = state.features.filter(
+    (f) =>
+      f.properties.statusCat === "unknown" ||
+      state.activeCats.has(f.properties.statusCat)
+  );
+  source.setData({ type: "FeatureCollection", features });
+  setCount(features.length);
+}
+
+// ── Carga de fuentes por viewport ────────────────────────────────────────────
+let zoomHintShown = false;
+let loading = false;
+let pendingRefresh = false;
+
+async function refreshData(map) {
+  if (map.getZoom() < CONFIG.minDataZoom) {
+    // Solo avisa la primera vez y si aún no hay nada que ver.
+    if (!zoomHintShown && store.get().features.length === 0) {
+      zoomHintShown = true;
+      showToast("Acércate o busca una ciudad para ver las fuentes.");
+    }
+    return;
+  }
+
+  if (loading) {
+    // Ya hay una petición en vuelo: recuerda repetir con el viewport final.
+    pendingRefresh = true;
+    return;
+  }
+  loading = true;
+  try {
+    const b = map.getBounds();
+    const { errors } = await loadArea([
+      b.getWest(),
+      b.getSouth(),
+      b.getEast(),
+      b.getNorth(),
+    ]);
+    store.set({ features: getAllFeatures() });
+
+    for (const { source, error } of errors) {
+      console.error(`[${source}]`, error);
+      if (source === "osm" && error?.status === 429) {
+        showToast("El servidor de OSM está saturado; espera un momento.");
+      } else {
+        showToast("No se pudieron cargar algunas fuentes de la zona.");
+      }
+    }
+  } finally {
+    loading = false;
+    if (pendingRefresh) {
+      pendingRefresh = false;
+      refreshData(map);
+    }
+  }
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
 }
 
 // ── Interacciones de mapa ────────────────────────────────────────────────────
@@ -134,25 +210,13 @@ function setupFilterMenu() {
 }
 
 // ── Filtros por estado ────────────────────────────────────────────────────────
-function setupFilters(map, fullData) {
-  const active = new Set(["ok", "warn", "off"]);
+function setupFilters() {
   const opts = document.querySelectorAll(".filter-opt[data-cat]");
   const badge = document.getElementById("filter-badge");
 
-  const apply = () => {
-    const features = (fullData.features || []).filter((f) =>
-      active.has(estadoCategoria(f.properties.estado))
-    );
-    map.getSource(SOURCE_ID).setData({
-      type: "FeatureCollection",
-      features,
-    });
-    setCount(features.length);
-    if (badge) badge.hidden = active.size === 3; // marca que hay filtros activos
-  };
-
   opts.forEach((opt) => {
     opt.addEventListener("click", () => {
+      const active = new Set(store.get().activeCats);
       const cat = opt.dataset.cat;
       if (active.has(cat) && active.size > 1) {
         active.delete(cat);
@@ -161,7 +225,8 @@ function setupFilters(map, fullData) {
         active.add(cat);
         opt.classList.add("is-active");
       }
-      apply();
+      if (badge) badge.hidden = active.size === 3; // marca que hay filtros activos
+      store.set({ activeCats: active });
     });
   });
 }
@@ -169,35 +234,38 @@ function setupFilters(map, fullData) {
 async function main() {
   const map = initMap();
   setupGeolocation(map, document.getElementById("locate-btn"), showToast);
+  setupSearch(map, showToast);
 
   if (CONFIG.usingFallbackStyle) {
     console.warn(
-      "[Water] Sin clave de MapTiler: usando estilo de respaldo. " +
-        "Añade tu clave gratuita en js/config.js (MAPTILER_KEY)."
+      "[Water] Sin clave de MapTiler: usando estilo de respaldo y buscador " +
+        "desactivado. Define VITE_MAPTILER_KEY en un fichero .env " +
+        "(ver .env.example)."
     );
   }
 
   const sheetClose = document.getElementById("sheet-close");
   if (sheetClose) sheetClose.addEventListener("click", closeSheet);
   setupFilterMenu();
+  setupFilters();
 
-  showToast("Cargando fuentes…", true);
-
-  let geojson;
-  try {
-    geojson = await loadFuentes();
-  } catch (err) {
-    console.error(err);
-    showToast("Error al cargar las fuentes. Revisa la consola.", true);
-    return;
-  }
+  store.subscribe((state) => render(map, state));
 
   map.on("load", () => {
-    addFuentesLayers(map, geojson);
+    addFuentesLayers(map, {
+      type: "FeatureCollection",
+      features: [],
+    });
     wireInteractions(map);
-    setupFilters(map, geojson);
-    setCount((geojson.features || []).length);
-    showToast("Toca un punto para ver los detalles.");
+
+    // Carga inicial de la zona visible + recargas al mover el mapa.
+    showToast("Cargando fuentes…", true);
+    refreshData(map).then(() => {
+      if (store.get().features.length > 0) {
+        showToast("Toca un punto para ver los detalles.");
+      }
+    });
+    map.on("moveend", debounce(() => refreshData(map), 400));
   });
 }
 

@@ -1,19 +1,21 @@
 // Configuración central de la aplicación (MapLibre GL + MapTiler).
 
 // ───────────────────────────────────────────────────────────────────────────
-//  CLAVE DE MAPTILER  ← pega aquí tu clave gratuita
-//  Consíguela en https://cloud.maptiler.com/account/keys/ (100k cargas/mes
-//  gratis) y restríngela a tu dominio en el panel de MapTiler.
-//  Mientras esté el valor por defecto, la app usa un estilo de respaldo
-//  gratuito de MapLibre para que el mapa siga renderizando.
+//  CLAVE DE MAPTILER
+//  Se lee de la variable de entorno VITE_MAPTILER_KEY (fichero `.env` en
+//  local — ver `.env.example` — o secret de GitHub Actions en CI). La clave
+//  de cliente es pública por naturaleza: mantén la restricción por dominio
+//  en el panel de MapTiler. Como respaldo se usa la clave histórica del
+//  proyecto para que un build sin `.env` siga funcionando igual.
 // ───────────────────────────────────────────────────────────────────────────
-export const MAPTILER_KEY = "V7XgnRt67o2g2L2kypS4";
+export const MAPTILER_KEY =
+  import.meta.env.VITE_MAPTILER_KEY || "V7XgnRt67o2g2L2kypS4";
 
-const hasKey = MAPTILER_KEY && MAPTILER_KEY !== "GET_YOUR_FREE_KEY";
+const hasKey = Boolean(MAPTILER_KEY);
 
 // Estilo de respaldo sin clave: mapa de calles OSM (raster) para que la app
-// siga viéndose bien antes de añadir la clave de MapTiler. El servidor de
-// fuentes de OpenMapTiles aporta las glifos para los números de clúster.
+// siga viéndose bien sin clave de MapTiler. El servidor de fuentes de
+// OpenMapTiles aporta las glifos para los números de clúster.
 const RASTER_FALLBACK = {
   version: 8,
   glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
@@ -37,13 +39,14 @@ export const CONFIG = {
   // MapLibre usa [lng, lat]
   center: [-3.7038, 40.4168], // Puerta del Sol
   zoom: 12.5,
-  minZoom: 10,
+  minZoom: 2, // mapa mundial: sin maxBounds ni zoom mínimo local
   maxZoom: 19,
-  // Límites del término municipal: [[oeste, sur], [este, norte]]
-  maxBounds: [
-    [-4.05, 40.2],
-    [-3.4, 40.7],
-  ],
+
+  // Zoom mínimo para cargar fuentes por viewport (por debajo, se invita a
+  // acercarse o usar el buscador; consultar el mundo entero no es viable).
+  // A 10 entra una ciudad completa: así el fitBounds del buscador siempre
+  // queda por encima y carga datos.
+  minDataZoom: 10,
 
   // Estilo vectorial. Streets v2 de MapTiler (look tipo Google Maps) con clave;
   // mapa de calles OSM como respaldo sin clave.
@@ -52,12 +55,25 @@ export const CONFIG = {
     : RASTER_FALLBACK,
   usingFallbackStyle: !hasKey,
 
-  // Atribución del dataset (las teselas/estilo añaden la suya automáticamente).
+  // Atribución de los datasets (las teselas/estilo añaden la suya).
   attribution:
-    'Datos: <a href="https://datos.madrid.es/dataset/300051-0-fuentes" target="_blank" rel="noopener">Ayuntamiento de Madrid</a>',
+    'Fuentes: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · <a href="https://datos.madrid.es/dataset/300051-0-fuentes" target="_blank" rel="noopener">Ayto. de Madrid</a>',
 
-  // GeoJSON local (ruta relativa para GitHub Pages)
-  dataUrl: "data/fuentes.geojson",
+  // GeoJSON oficial de Madrid (copiado desde public/ al build; ruta relativa
+  // para GitHub Pages).
+  madridDataUrl: "data/fuentes.geojson",
+
+  // API pública de Overpass (fuentes OSM de todo el mundo).
+  overpassEndpoint: "https://overpass-api.de/api/interpreter",
+
+  // Geocoding de MapTiler para el buscador (requiere clave).
+  geocoding: {
+    url: (query) =>
+      `https://api.maptiler.com/geocoding/${encodeURIComponent(
+        query
+      )}.json?key=${MAPTILER_KEY}&limit=5&language=es`,
+    enabled: hasKey,
+  },
 
   // Clustering nativo de MapLibre
   cluster: {

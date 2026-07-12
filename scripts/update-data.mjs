@@ -20,7 +20,7 @@ const MIN_FEATURES_DEFAULT = 500;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const OUTPUT_PATH = path.join(__dirname, '..', 'data', 'fuentes.geojson');
+const OUTPUT_PATH = path.join(__dirname, '..', 'public', 'data', 'fuentes.geojson');
 
 // --- Utilidades ---------------------------------------------------------
 

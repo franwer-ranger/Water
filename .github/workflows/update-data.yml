@@ -26,13 +26,13 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Actualizar data/fuentes.geojson
+      - name: Actualizar public/data/fuentes.geojson
         run: node scripts/update-data.mjs
 
       - name: Comprobar si hay cambios
         id: cambios
         run: |
-          if [ -n "$(git status --porcelain data/fuentes.geojson)" ]; then
+          if [ -n "$(git status --porcelain public/data/fuentes.geojson)" ]; then
             echo "hay_cambios=true" >> "$GITHUB_OUTPUT"
           else
             echo "hay_cambios=false" >> "$GITHUB_OUTPUT"
@@ -43,7 +43,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/fuentes.geojson
+          git add public/data/fuentes.geojson
           git commit -m "Update fountain data ($(date -u +%Y-%m-%d))"
           git push origin HEAD:main
 

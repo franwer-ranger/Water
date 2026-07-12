@@ -94,6 +94,100 @@ body {
   color: var(--accent-strong);
 }
 
+/* ── Buscador de zonas (glass) ────────────────────────────────────────────── */
+.search {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, 38vw);
+  z-index: 24;
+}
+
+.search__box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  transition: background 0.15s ease;
+}
+
+.search__box:focus-within {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.search__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--ink-soft);
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.search__input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
+.search__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+/* Dropdown de sugerencias (misma animación que el popover de filtros) */
+.search__results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 7px;
+  list-style: none;
+  border-radius: 16px;
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+  animation: optIn 0.28s both;
+}
+
+.search__opt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.search__opt.is-active {
+  background: rgba(17, 40, 60, 0.08);
+}
+
+.search__opt-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.search__opt-ctx {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Filtros (botón + popover) ────────────────────────────────────────────── */
 .filter-menu {
   position: fixed;
@@ -477,6 +571,13 @@ body {
   transform: scale(0.98);
 }
 
+.sheet__source {
+  margin: 12px 0 0;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
 /* ── Marcador de ubicación del usuario ────────────────────────────────────── */
 .user-marker {
   width: 18px;
@@ -515,9 +616,24 @@ body {
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
+/* En pantallas medianas el buscador baja a la fila de filtros (a la derecha
+   del botón, dejando hueco a los controles de zoom). */
+@media (max-width: 900px) {
+  .search {
+    top: calc(max(12px, env(safe-area-inset-top)) + 60px);
+    left: 132px;
+    right: 64px;
+    transform: none;
+    width: auto;
+  }
+}
+
 @media (max-width: 600px) {
   .brand__title {
     font-size: 0.95rem;
+  }
+  .search {
+    left: 64px;
   }
   .fab {
     width: 56px;
@@ -551,6 +667,7 @@ body {
   .filter-toggle__icon,
   .filter-opt,
   .filter-opt__check,
+  .search__results,
   .sheet {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;

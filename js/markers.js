@@ -1,38 +1,27 @@
 import { CONFIG } from "./config.js";
 import { getUserLatLng } from "./geolocation.js";
 
-// ── Estados ────────────────────────────────────────────────────────────────
+// ── Estados normalizados ────────────────────────────────────────────────────
+// 'unknown' (fuentes sin estado fiable, p. ej. OSM) se pinta con el color de
+// marca y sin píldora de estado.
 export const COLORS = {
   ok: "#16a34a",
   warn: "#f59e0b",
   off: "#dc2626",
-  accent: "#0085c7",
+  unknown: "#0085c7",
 };
 
-const ESTADO_TEXTO = {
-  OPERATIVO: "Operativa",
-  CERRADA_TEMPORALMENT: "Cerrada temporalmente",
-  FUERA_DE_SERVICIO: "Fuera de servicio",
-  NO_OPERATIVO: "No operativa",
-  NO_PREPARADO: "No preparada",
-};
-
-// Agrupa los estados del dataset en tres categorías visuales.
-export function estadoCategoria(estado) {
-  if (estado === "OPERATIVO") return "ok";
-  if (estado === "CERRADA_TEMPORALMENT") return "warn";
-  return "off"; // FUERA_DE_SERVICIO, NO_OPERATIVO, NO_PREPARADO, null…
-}
-
-// Expresión MapLibre: color del punto según el estado.
-const estadoColorExpr = [
+// Expresión MapLibre: color del punto según statusCat normalizado.
+const statusColorExpr = [
   "match",
-  ["get", "estado"],
-  "OPERATIVO",
+  ["get", "statusCat"],
+  "ok",
   COLORS.ok,
-  "CERRADA_TEMPORALMENT",
+  "warn",
   COLORS.warn,
-  /* resto */ COLORS.off,
+  "off",
+  COLORS.off,
+  /* unknown y resto */ COLORS.unknown,
 ];
 
 export const SOURCE_ID = "fuentes";
@@ -54,7 +43,7 @@ export function addFuentesLayers(map, geojson) {
     source: SOURCE_ID,
     filter: ["has", "point_count"],
     paint: {
-      "circle-color": COLORS.accent,
+      "circle-color": COLORS.unknown,
       "circle-opacity": 0.9,
       "circle-radius": ["step", ["get", "point_count"], 16, 25, 21, 100, 27],
       "circle-stroke-width": 4,
@@ -83,7 +72,7 @@ export function addFuentesLayers(map, geojson) {
     source: SOURCE_ID,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-color": estadoColorExpr,
+      "circle-color": statusColorExpr,
       "circle-opacity": 0.18,
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 16],
     },
@@ -96,7 +85,7 @@ export function addFuentesLayers(map, geojson) {
     source: SOURCE_ID,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-color": estadoColorExpr,
+      "circle-color": statusColorExpr,
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 4, 17, 8],
       "circle-stroke-width": 2,
       "circle-stroke-color": "#ffffff",
@@ -112,33 +101,49 @@ function directionsUrl(lat, lng) {
   return `https://www.google.com/maps/dir/?api=1${o}&destination=${lat},${lng}&travelmode=walking`;
 }
 
-// HTML interior del bottom-sheet de detalle. coords viene como [lng, lat].
+// HTML interior del bottom-sheet de detalle sobre las propiedades
+// normalizadas (name/address/area opcionales, píldora de estado solo si la
+// source aporta estado, atribución de la source). coords viene como [lng, lat].
 export function detailHtml(props, coords) {
-  const cat = estadoCategoria(props.estado);
-  const estadoTxt = ESTADO_TEXTO[props.estado] || "Estado desconocido";
+  const cat = props.statusCat || "unknown";
   const parts = [];
   parts.push('<div class="sheet__head">');
   parts.push('<span class="sheet__icon" aria-hidden="true">💧</span>');
   parts.push("<div>");
-  parts.push("<h2 class=\"sheet__title\">Fuente de agua potable</h2>");
-  if (props.direccion)
-    parts.push(`<p class="sheet__addr">${escapeHtml(props.direccion)}</p>`);
-  const zona = [props.barrio, props.distrito].filter(Boolean).join(" · ");
-  if (zona) parts.push(`<p class="sheet__zona">${escapeHtml(zona)}</p>`);
+  parts.push(
+    `<h2 class="sheet__title">${escapeHtml(
+      props.name || "Fuente de agua potable"
+    )}</h2>`
+  );
+  if (props.address)
+    parts.push(`<p class="sheet__addr">${escapeHtml(props.address)}</p>`);
+  if (props.area)
+    parts.push(`<p class="sheet__zona">${escapeHtml(props.area)}</p>`);
   parts.push("</div></div>");
 
-  parts.push(
-    `<span class="estado estado--${cat}"><span class="estado__dot"></span>${estadoTxt}</span>`
-  );
+  if (cat !== "unknown") {
+    const statusText = props.statusText || "Estado desconocido";
+    parts.push(
+      `<span class="estado estado--${cat}"><span class="estado__dot"></span>${escapeHtml(
+        statusText
+      )}</span>`
+    );
+  }
 
-  // El botón "Cómo llegar" se muestra en operativas y en cerradas
-  // temporalmente: este segundo estado no es fiable y muchas fuentes
-  // marcadas así están realmente abiertas.
-  if (cat === "ok" || cat === "warn") {
+  // El botón "Cómo llegar" se muestra salvo en fuentes fuera de servicio.
+  // 'warn' (cerrada temporalmente) lo mantiene: ese estado no es fiable y
+  // muchas fuentes marcadas así están realmente abiertas.
+  if (cat !== "off") {
     const url = directionsUrl(coords[1], coords[0]);
     parts.push(
       `<a class="sheet__btn" href="${url}" target="_blank" rel="noopener">` +
         '<span aria-hidden="true">🧭</span> Cómo llegar</a>'
+    );
+  }
+
+  if (props.sourceName) {
+    parts.push(
+      `<p class="sheet__source">Datos: ${escapeHtml(props.sourceName)}</p>`
     );
   }
   return parts.join("");

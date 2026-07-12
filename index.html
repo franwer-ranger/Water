@@ -3,33 +3,50 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
-  <meta name="description" content="Mapa interactivo de las fuentes de agua potable de Madrid." />
+  <meta name="description" content="Mapa interactivo de fuentes de agua potable: OpenStreetMap en todo el mundo y datos oficiales verificados donde existen." />
   <meta name="theme-color" content="#0085c7" />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192" />
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-title" content="Fuentes" />
-  <title>Fuentes de agua potable de Madrid</title>
+  <title>Fuentes de agua potable</title>
 
-  <!-- MapLibre GL (vendorizado, sin CDN en runtime) -->
-  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <!-- Mapa a pantalla completa -->
-  <div id="map" role="application" aria-label="Mapa de fuentes de agua potable de Madrid"></div>
+  <div id="map" role="application" aria-label="Mapa de fuentes de agua potable"></div>
 
   <!-- Barra superior (glass) -->
   <header class="top-bar glass">
     <div class="brand">
       <span class="brand__icon" aria-hidden="true">💧</span>
       <div class="brand__text">
-        <h1 class="brand__title">Fuentes de Madrid</h1>
+        <h1 class="brand__title">Fuentes</h1>
         <span class="count" id="count" hidden></span>
       </div>
     </div>
   </header>
+
+  <!-- Buscador de zonas (glass) -->
+  <div class="search" id="search">
+    <div class="search__box glass">
+      <svg class="search__icon" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+           stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.2" y2="16.2"></line>
+      </svg>
+      <input id="search-input" class="search__input" type="search"
+             placeholder="Buscar ciudad o zona…" autocomplete="off"
+             spellcheck="false" role="combobox" aria-expanded="false"
+             aria-controls="search-listbox" aria-autocomplete="list"
+             aria-label="Buscar ciudad o zona" />
+    </div>
+    <ul class="search__results glass" id="search-listbox" role="listbox"
+        aria-label="Sugerencias" hidden></ul>
+  </div>
 
   <!-- Filtros por estado (botón + popover desplegable) -->
   <div class="filter-menu" id="filter-menu">
@@ -81,9 +98,7 @@
     <div id="sheet-body"></div>
   </aside>
 
-  <!-- Librería de mapa -->
-  <script src="vendor/maplibre/maplibre-gl.js"></script>
-  <!-- Aplicación -->
+  <!-- Aplicación (Vite bundlea JS y CSS de MapLibre) -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import maplibregl from "maplibre-gl";
+
 // Geolocalización: "Buscar fuentes cerca de mí" (MapLibre GL).
 
 let userMarker = null;

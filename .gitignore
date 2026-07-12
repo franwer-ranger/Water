@@ -8,3 +8,10 @@ Thumbs.db
 # Logs / temp
 *.log
 node_modules/
+
+# Build de Vite
+dist/
+
+# Claves locales (usa .env.example como plantilla)
+.env
+.env.local
