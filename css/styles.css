@@ -52,55 +52,13 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* ── Barra superior ───────────────────────────────────────────────────────── */
-.top-bar {
-  position: fixed;
-  top: max(12px, env(safe-area-inset-top));
-  left: 12px;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  padding: 8px 16px 8px 12px;
-  border-radius: var(--radius-pill);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.brand__icon {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.brand__text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.brand__title {
-  margin: 0;
-  font-size: 1.02rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.count {
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--accent-strong);
-}
-
-/* ── Buscador de zonas (glass) ────────────────────────────────────────────── */
+/* ── Buscador de zonas (glass): protagonista arriba en el centro ─────────── */
 .search {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  width: min(420px, 38vw);
+  width: min(520px, calc(100vw - 24px));
   z-index: 24;
 }
 
@@ -108,8 +66,8 @@ body {
   display: flex;
   align-items: center;
   gap: 9px;
-  height: 42px;
-  padding: 0 14px;
+  height: 46px;
+  padding: 0 8px 0 16px;
   border-radius: var(--radius-pill);
   transition: background 0.15s ease;
 }
@@ -132,9 +90,28 @@ body {
   background: transparent;
   outline: none;
   font: inherit;
-  font-size: 0.9rem;
+  /* Mínimo 16px: por debajo, los navegadores móviles hacen zoom automático
+     de la página al enfocar el input. */
+  font-size: 16px;
   font-weight: 500;
   color: var(--ink);
+}
+
+.search__clear {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.search__clear:hover {
+  background: rgba(17, 40, 60, 0.08);
 }
 
 .search__input::placeholder {
@@ -188,22 +165,53 @@ body {
   text-overflow: ellipsis;
 }
 
-/* ── Filtros (botón + popover) ────────────────────────────────────────────── */
-.filter-menu {
+.search__empty {
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* ── Fila secundaria: filtros + contador (compactos, bajo el buscador) ────── */
+.toolbar {
   position: fixed;
-  top: calc(max(12px, env(safe-area-inset-top)) + 60px);
-  left: 12px;
+  top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.count[hidden] {
+  display: none;
+}
+
+.filter-menu {
+  position: relative;
 }
 
 .filter-toggle {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 16px 0 13px;
-  font-size: 0.85rem;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--ink);
   border-radius: var(--radius-pill);
@@ -219,8 +227,8 @@ body {
 }
 
 .filter-toggle__icon {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   color: var(--accent-strong);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -233,8 +241,8 @@ body {
   position: absolute;
   top: -3px;
   right: -3px;
-  width: 11px;
-  height: 11px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 2px #fff;
@@ -616,25 +624,15 @@ body {
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
-/* En pantallas medianas el buscador baja a la fila de filtros (a la derecha
-   del botón, dejando hueco a los controles de zoom). */
-@media (max-width: 900px) {
-  .search {
-    top: calc(max(12px, env(safe-area-inset-top)) + 60px);
-    left: 132px;
-    right: 64px;
-    transform: none;
-    width: auto;
+/* En pantallas estrechas el buscador ocupa el ancho y los controles de zoom
+   de MapLibre bajan para no quedar debajo de él. */
+@media (max-width: 700px) {
+  .maplibregl-ctrl-top-right {
+    top: calc(max(12px, env(safe-area-inset-top)) + 100px);
   }
 }
 
 @media (max-width: 600px) {
-  .brand__title {
-    font-size: 0.95rem;
-  }
-  .search {
-    left: 64px;
-  }
   .fab {
     width: 56px;
     height: 56px;
@@ -650,14 +648,6 @@ body {
   }
   .fab__icon {
     font-size: 1.4rem;
-  }
-  .filter-toggle {
-    width: 44px;
-    padding: 0;
-    justify-content: center;
-  }
-  .filter-toggle__label {
-    display: none;
   }
 }
 

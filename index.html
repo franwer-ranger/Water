@@ -18,18 +18,7 @@
   <!-- Mapa a pantalla completa -->
   <div id="map" role="application" aria-label="Mapa de fuentes de agua potable"></div>
 
-  <!-- Barra superior (glass) -->
-  <header class="top-bar glass">
-    <div class="brand">
-      <span class="brand__icon" aria-hidden="true">💧</span>
-      <div class="brand__text">
-        <h1 class="brand__title">Fuentes</h1>
-        <span class="count" id="count" hidden></span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Buscador de zonas (glass) -->
+  <!-- Buscador de zonas (glass): el elemento principal, arriba en el centro -->
   <div class="search" id="search">
     <div class="search__box glass">
       <svg class="search__icon" viewBox="0 0 24 24" fill="none"
@@ -43,12 +32,15 @@
              spellcheck="false" role="combobox" aria-expanded="false"
              aria-controls="search-listbox" aria-autocomplete="list"
              aria-label="Buscar ciudad o zona" />
+      <button type="button" class="search__clear" id="search-clear"
+              aria-label="Borrar búsqueda" hidden>&times;</button>
     </div>
     <ul class="search__results glass" id="search-listbox" role="listbox"
         aria-label="Sugerencias" hidden></ul>
   </div>
 
-  <!-- Filtros por estado (botón + popover desplegable) -->
+  <!-- Fila secundaria bajo el buscador: filtros + contador (compactos) -->
+  <div class="toolbar">
   <div class="filter-menu" id="filter-menu">
     <button type="button" class="filter-toggle glass" id="filter-toggle"
             aria-expanded="false" aria-controls="filter-popover"
@@ -80,6 +72,9 @@
         <span class="filter-opt__check" aria-hidden="true">✓</span>
       </button>
     </div>
+  </div>
+
+  <span class="count glass" id="count" hidden></span>
   </div>
 
   <!-- Mensajes transitorios -->

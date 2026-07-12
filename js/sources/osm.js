@@ -16,8 +16,15 @@ export const providesStatus = false;
 const CELL_DEG = 0.1;
 const MAX_CELLS_PER_FETCH = 40; // salvaguarda ante viewports desmesurados
 
+// Cortesía con la API pública: espacio mínimo entre peticiones y pausa larga
+// si Overpass devuelve 429/504 (rate limit) antes de volver a intentarlo.
+const MIN_INTERVAL_MS = 2500;
+const COOLDOWN_MS = 20000;
+
 const loadedCells = new Set();
 const featuresById = new Map();
+let lastFetchAt = 0;
+let cooldownUntil = 0;
 
 function cellsFor([w, s, e, n]) {
   const cells = [];
@@ -38,17 +45,8 @@ function cellBbox(key) {
   return [x * CELL_DEG, y * CELL_DEG, (x + 1) * CELL_DEG, (y + 1) * CELL_DEG];
 }
 
-// Bbox que cubre todas las celdas pendientes (una única petición a Overpass).
-function coveringBbox(cellKeys) {
-  let [w, s, e, n] = cellBbox(cellKeys[0]);
-  for (const key of cellKeys.slice(1)) {
-    const [cw, cs, ce, cn] = cellBbox(key);
-    w = Math.min(w, cw);
-    s = Math.min(s, cs);
-    e = Math.max(e, ce);
-    n = Math.max(n, cn);
-  }
-  return [w, s, e, n];
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 function normalizar(el) {
@@ -76,9 +74,15 @@ function normalizar(el) {
   };
 }
 
-async function queryOverpass([w, s, e, n]) {
+async function queryOverpass(bboxes) {
+  // Una única petición con la unión de las celdas pendientes exactas: al
+  // panear en diagonal, un bbox envolvente pediría también el área ya
+  // cargada entre celdas; la unión no.
   // nwr = node + way + relation; `out center` da el centroide de ways/relations.
-  const query = `[out:json][timeout:25];nwr["amenity"="drinking_water"](${s},${w},${n},${e});out center;`;
+  const clauses = bboxes
+    .map(([w, s, e, n]) => `nwr["amenity"="drinking_water"](${s},${w},${n},${e});`)
+    .join("");
+  const query = `[out:json][timeout:25];(${clauses});out center;`;
   const res = await fetch(CONFIG.overpassEndpoint, {
     method: "POST",
     body: `data=${encodeURIComponent(query)}`,
@@ -93,14 +97,34 @@ async function queryOverpass([w, s, e, n]) {
   return json.elements || [];
 }
 
-// Devuelve todas las fuentes OSM conocidas del bbox, pidiendo a Overpass solo
-// las celdas aún no cargadas. Si Overpass falla, no se marca nada como
-// cargado (se reintentará en el siguiente movimiento del mapa).
+// Devuelve todas las fuentes OSM conocidas, pidiendo a Overpass solo las
+// celdas del bbox aún no cargadas. Si Overpass falla, no se marca nada como
+// cargado (se reintentará en el siguiente movimiento del mapa); tras un
+// rate limit se devuelve solo la caché durante el cooldown, sin más
+// peticiones ni errores repetidos.
 export async function fetchArea(bbox) {
   const pending = cellsFor(bbox).filter((key) => !loadedCells.has(key));
 
-  if (pending.length > 0 && pending.length <= MAX_CELLS_PER_FETCH) {
-    const elements = await queryOverpass(coveringBbox(pending));
+  const skip =
+    pending.length === 0 ||
+    pending.length > MAX_CELLS_PER_FETCH ||
+    Date.now() < cooldownUntil;
+
+  if (!skip) {
+    // Espacia las peticiones para no agotar los slots de la API pública.
+    const wait = lastFetchAt + MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastFetchAt = Date.now();
+
+    let elements;
+    try {
+      elements = await queryOverpass(pending.map(cellBbox));
+    } catch (err) {
+      if (err.status === 429 || err.status === 504) {
+        cooldownUntil = Date.now() + COOLDOWN_MS;
+      }
+      throw err;
+    }
     for (const el of elements) {
       const feature = normalizar(el);
       if (feature) featuresById.set(feature.properties.id, feature);

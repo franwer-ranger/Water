@@ -1,8 +1,8 @@
 import { CONFIG } from "./config.js";
 
 // Buscador estilo Google Maps (glass) sobre el geocoding de MapTiler. Al
-// elegir un resultado se navega a su zona con fitBounds, lo que dispara la
-// carga de fuentes de esa zona (buscador y datos acoplados por diseño).
+// elegir un resultado se navega a su zona, lo que dispara la carga de
+// fuentes de esa zona (buscador y datos acoplados por diseño).
 
 const DEBOUNCE_MS = 300;
 const MIN_QUERY_LEN = 2;
@@ -11,6 +11,7 @@ export function setupSearch(map, showToast) {
   const root = document.getElementById("search");
   const input = document.getElementById("search-input");
   const listbox = document.getElementById("search-listbox");
+  const clearBtn = document.getElementById("search-clear");
   if (!root || !input || !listbox) return;
 
   // Sin clave de MapTiler no hay geocoding: se oculta el buscador.
@@ -33,10 +34,15 @@ export function setupSearch(map, showToast) {
     activeIndex = -1;
   }
 
+  function updateClearBtn() {
+    if (clearBtn) clearBtn.hidden = input.value.length === 0;
+  }
+
   function setActive(index) {
     activeIndex = index;
     listbox.querySelectorAll(".search__opt").forEach((el, i) => {
       el.classList.toggle("is-active", i === index);
+      el.setAttribute("aria-selected", String(i === index));
     });
     if (index >= 0) {
       input.setAttribute("aria-activedescendant", `search-opt-${index}`);
@@ -47,6 +53,9 @@ export function setupSearch(map, showToast) {
   }
 
   function select(result) {
+    // Deja el nombre elegido en el input, como en Google Maps.
+    input.value = result.place_name || result.text || input.value;
+    updateClearBtn();
     close();
     input.blur();
     if (result.bbox) {
@@ -70,11 +79,21 @@ export function setupSearch(map, showToast) {
     }
   }
 
+  function open() {
+    listbox.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  function renderEmpty(q) {
+    listbox.innerHTML = "";
+    const li = document.createElement("li");
+    li.className = "search__empty";
+    li.textContent = `Sin resultados para “${q}”`;
+    listbox.appendChild(li);
+    open();
+  }
+
   function render() {
-    if (results.length === 0) {
-      close();
-      return;
-    }
     listbox.innerHTML = "";
     results.forEach((r, i) => {
       const li = document.createElement("li");
@@ -100,28 +119,36 @@ export function setupSearch(map, showToast) {
         li.appendChild(ctx);
       }
 
-      // mousedown en vez de click: se dispara antes del blur del input.
-      li.addEventListener("mousedown", (e) => {
+      // pointerdown (no click): en móvil el click puede llegar tarde o
+      // perderse tras el blur del teclado; pointerdown se dispara al
+      // instante y preventDefault evita que el input pierda el foco antes.
+      li.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         select(r);
       });
       li.addEventListener("mousemove", () => setActive(i));
       listbox.appendChild(li);
     });
-    listbox.hidden = false;
-    input.setAttribute("aria-expanded", "true");
+    open();
     setActive(-1);
   }
 
   async function query(q) {
     const requestId = ++lastRequestId;
     try {
-      const res = await fetch(CONFIG.geocoding.url(q));
+      // Sesgo por proximidad: prioriza resultados cercanos a lo que se ve.
+      const res = await fetch(CONFIG.geocoding.url(q, map.getCenter()));
       if (!res.ok) throw new Error(`Geocoding HTTP ${res.status}`);
       const json = await res.json();
       if (requestId !== lastRequestId) return; // llegó tarde: hay otra en curso
       results = json.features || [];
-      render();
+      if (results.length === 0) {
+        renderEmpty(q);
+        results = [];
+        activeIndex = -1;
+      } else {
+        render();
+      }
     } catch (err) {
       if (requestId !== lastRequestId) return;
       console.error("[search]", err);
@@ -132,6 +159,7 @@ export function setupSearch(map, showToast) {
 
   input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
+    updateClearBtn();
     const q = input.value.trim();
     if (q.length < MIN_QUERY_LEN) {
       lastRequestId++; // invalida respuestas en vuelo
@@ -142,8 +170,11 @@ export function setupSearch(map, showToast) {
   });
 
   input.addEventListener("keydown", (e) => {
-    if (listbox.hidden) {
-      if (e.key === "Escape") input.blur();
+    if (listbox.hidden || results.length === 0) {
+      if (e.key === "Escape") {
+        close();
+        input.blur();
+      }
       return;
     }
     switch (e.key) {
@@ -165,10 +196,17 @@ export function setupSearch(map, showToast) {
     }
   });
 
-  // Reabre las sugerencias al volver al input con texto ya escrito.
-  input.addEventListener("focus", () => {
-    if (results.length > 0) render();
-  });
+  if (clearBtn) {
+    // pointerdown + preventDefault para no robar el foco del input.
+    clearBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      input.value = "";
+      lastRequestId++;
+      updateClearBtn();
+      close();
+      input.focus();
+    });
+  }
 
   document.addEventListener("click", (e) => {
     if (!root.contains(e.target)) close();

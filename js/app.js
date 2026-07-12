@@ -95,6 +95,8 @@ function render(map, state) {
 let zoomHintShown = false;
 let loading = false;
 let pendingRefresh = false;
+let lastErrorToastAt = 0;
+let retryTimer = null;
 
 async function refreshData(map) {
   if (map.getZoom() < CONFIG.minDataZoom) {
@@ -124,8 +126,16 @@ async function refreshData(map) {
 
     for (const { source, error } of errors) {
       console.error(`[${source}]`, error);
-      if (source === "osm" && error?.status === 429) {
-        showToast("El servidor de OSM está saturado; espera un momento.");
+      // Máximo un toast de error cada 15 s: al mover el mapa varias veces
+      // seguidas no tiene sentido repetir el mismo aviso.
+      if (Date.now() - lastErrorToastAt < 15000) continue;
+      lastErrorToastAt = Date.now();
+      if (source === "osm" && (error?.status === 429 || error?.status === 504)) {
+        showToast("El servidor de OSM está saturado; reintento en unos segundos.");
+        // Reintenta solo cuando pase el cooldown del adapter, aunque el
+        // usuario no vuelva a mover el mapa.
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(() => refreshData(map), 21000);
       } else {
         showToast("No se pudieron cargar algunas fuentes de la zona.");
       }

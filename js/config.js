@@ -66,12 +66,17 @@ export const CONFIG = {
   // API pública de Overpass (fuentes OSM de todo el mundo).
   overpassEndpoint: "https://overpass-api.de/api/interpreter",
 
-  // Geocoding de MapTiler para el buscador (requiere clave).
+  // Geocoding de MapTiler para el buscador (requiere clave). `center`
+  // ({lng, lat}) sesga los resultados hacia la zona visible del mapa.
   geocoding: {
-    url: (query) =>
-      `https://api.maptiler.com/geocoding/${encodeURIComponent(
+    url: (query, center) => {
+      const proximity = center
+        ? `&proximity=${center.lng.toFixed(4)},${center.lat.toFixed(4)}`
+        : "";
+      return `https://api.maptiler.com/geocoding/${encodeURIComponent(
         query
-      )}.json?key=${MAPTILER_KEY}&limit=5&language=es`,
+      )}.json?key=${MAPTILER_KEY}&limit=5&language=es&fuzzyMatch=true${proximity}`;
+    },
     enabled: hasKey,
   },
 
