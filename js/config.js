@@ -9,7 +9,7 @@
 //  proyecto para que un build sin `.env` siga funcionando igual.
 // ───────────────────────────────────────────────────────────────────────────
 export const MAPTILER_KEY =
-  import.meta.env.VITE_MAPTILER_KEY || "V7XgnRt67o2g2L2kypS4";
+  import.meta.env.VITE_MAPTILER_KEY;
 
 const hasKey = Boolean(MAPTILER_KEY);
 
