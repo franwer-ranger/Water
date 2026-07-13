@@ -12,7 +12,25 @@ const countEl = document.getElementById("count");
 const toastEl = document.getElementById("toast");
 const sheetEl = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
+const searchBoxEl = document.querySelector(".search__box");
+const searchHereEl = document.getElementById("search-here");
 let toastTimer;
+
+// Feedback de carga en el buscador: la lupa deja paso a un spinner mientras
+// hay una petición de fuentes en vuelo, venga del flujo que venga (carga
+// inicial, buscador, geolocalización o el botón "Buscar en esta zona").
+function setLoading(on) {
+  if (searchBoxEl) searchBoxEl.classList.toggle("is-loading", on);
+}
+
+// Botón "Buscar en esta zona": lo mostramos cuando el usuario arrastra el mapa
+// a una zona nueva y lo ocultamos en cuanto se dispara una carga.
+function showSearchHere() {
+  if (searchHereEl) searchHereEl.hidden = false;
+}
+function hideSearchHere() {
+  if (searchHereEl) searchHereEl.hidden = true;
+}
 
 // Estado compartido: features cargadas y filtros de estado activos. Los
 // filtros solo aplican a fuentes con estado real; las 'unknown' (OSM)
@@ -114,6 +132,10 @@ async function refreshData(map) {
     return;
   }
   loading = true;
+  // Al arrancar una carga, el botón sobra (ya estamos trayendo esta zona) y
+  // el buscador muestra el spinner.
+  hideSearchHere();
+  setLoading(true);
   try {
     const b = map.getBounds();
     const { errors } = await loadArea([
@@ -143,8 +165,12 @@ async function refreshData(map) {
   } finally {
     loading = false;
     if (pendingRefresh) {
+      // Encadenamos con el viewport final sin apagar el spinner para no
+      // parpadear: seguimos cargando.
       pendingRefresh = false;
       refreshData(map);
+    } else {
+      setLoading(false);
     }
   }
 }
@@ -268,14 +294,33 @@ async function main() {
     });
     wireInteractions(map);
 
-    // Carga inicial de la zona visible + recargas al mover el mapa.
+    // Carga inicial de la zona visible.
     showToast("Cargando fuentes…", true);
     refreshData(map).then(() => {
       if (store.get().features.length > 0) {
         showToast("Toca un punto para ver los detalles.");
       }
     });
-    map.on("moveend", debounce(() => refreshData(map), 400));
+
+    // Al terminar de mover el mapa distinguimos quién lo movió:
+    //  • Movimiento programático (buscador, geolocalización): cargamos solos,
+    //    como hasta ahora — buscar una zona debe enseñar sus fuentes.
+    //  • Arrastre/zoom del usuario: NO recargamos automáticamente; mostramos
+    //    "Buscar en esta zona" y dejamos que decida (estilo Google Maps).
+    const onUserMove = debounce(() => {
+      if (map.getZoom() >= CONFIG.minDataZoom) showSearchHere();
+      else hideSearchHere();
+    }, 200);
+    map.on("moveend", (e) => {
+      if (e.originalEvent) onUserMove();
+      else refreshData(map);
+    });
+
+    // El botón dispara la carga de la zona visible, igual que el resto de
+    // flujos, y se oculta a sí mismo al arrancar (vía refreshData).
+    if (searchHereEl) {
+      searchHereEl.addEventListener("click", () => refreshData(map));
+    }
   });
 }
 

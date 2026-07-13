@@ -97,6 +97,33 @@ body {
   color: var(--ink);
 }
 
+/* Spinner de carga dentro del buscador: reemplaza la lupa mientras hay una
+   petición de fuentes en vuelo (sea cual sea el flujo que la disparó). */
+.search__spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  border: 2.2px solid rgba(17, 40, 60, 0.18);
+  border-top-color: var(--accent-strong);
+  animation: spin 0.7s linear infinite;
+}
+
+.search__box.is-loading .search__icon {
+  display: none;
+}
+
+.search__box.is-loading .search__spinner {
+  display: block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .search__clear {
   flex: none;
   width: 32px;
@@ -170,6 +197,46 @@ body {
   font-size: 0.85rem;
   color: var(--ink-soft);
   text-align: center;
+}
+
+/* ── "Buscar en esta zona" (aparece al arrastrar el mapa) ─────────────────── */
+.search-here {
+  position: fixed;
+  top: calc(max(12px, env(safe-area-inset-top)) + 98px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 23;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+  animation: optIn 0.28s both;
+}
+
+.search-here[hidden] {
+  display: none;
+}
+
+.search-here:hover {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.search-here:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+.search-here__icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
 }
 
 /* ── Fila secundaria: filtros + contador (compactos, bajo el buscador) ────── */
@@ -658,9 +725,14 @@ body {
   .filter-opt,
   .filter-opt__check,
   .search__results,
+  .search-here,
   .sheet {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
+  }
+  /* El spinner conserva su giro: es feedback funcional, no decoración. */
+  .search__spinner {
+    animation-duration: 0.7s;
   }
   .fab {
     animation: none;

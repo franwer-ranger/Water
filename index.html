@@ -27,6 +27,8 @@
         <circle cx="11" cy="11" r="7"></circle>
         <line x1="21" y1="21" x2="16.2" y2="16.2"></line>
       </svg>
+      <!-- Spinner de carga: sustituye a la lupa mientras se traen fuentes -->
+      <span class="search__spinner" aria-hidden="true"></span>
       <input id="search-input" class="search__input" type="search"
              placeholder="Buscar ciudad o zona…" autocomplete="off"
              spellcheck="false" role="combobox" aria-expanded="false"
@@ -38,6 +40,18 @@
     <ul class="search__results glass" id="search-listbox" role="listbox"
         aria-label="Sugerencias" hidden></ul>
   </div>
+
+  <!-- "Buscar en esta zona": aparece bajo el buscador al arrastrar el mapa a
+       una zona nueva. Deja que el usuario decida cuándo cargar sus fuentes. -->
+  <button type="button" class="search-here glass" id="search-here" hidden>
+    <svg class="search-here__icon" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </svg>
+    <span class="search-here__label">Buscar en esta zona</span>
+  </button>
 
   <!-- Fila secundaria bajo el buscador: filtros + contador (compactos) -->
   <div class="toolbar">
