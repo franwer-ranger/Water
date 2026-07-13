@@ -52,6 +52,26 @@ export function setupSearch(map, showToast) {
     }
   }
 
+  // Vuela al destino y garantiza que se llega. En algunos dispositivos (p. ej.
+  // iOS con "Reducir movimiento" o en modo de bajo consumo, o si un evento de
+  // puntero residual aborta la animación) el flyTo puede no completarse y el
+  // mapa quedarse donde estaba. Como red de seguridad, al terminar el vuelo
+  // (moveend, tanto si acaba solo como si se cancela) comprobamos si el mapa
+  // quedó lejos del objetivo y, en ese caso, lo colocamos de forma directa.
+  function flyToTarget(target) {
+    const [tlng, tlat] = Array.isArray(target.center)
+      ? target.center
+      : [target.center.lng, target.center.lat];
+    map.once("moveend", () => {
+      const c = map.getCenter();
+      // ~0.02° ≈ 2 km: si el centro sigue lejos, el vuelo no llegó.
+      if (Math.abs(c.lng - tlng) + Math.abs(c.lat - tlat) > 0.02) {
+        map.jumpTo(target);
+      }
+    });
+    map.flyTo({ ...target, essential: true });
+  }
+
   function navigate(result) {
     if (result.bbox) {
       const camera = map.cameraForBounds(
@@ -65,12 +85,12 @@ export function setupSearch(map, showToast) {
         // Nunca por debajo del zoom de carga de datos: buscar una zona debe
         // enseñar sus fuentes siempre.
         camera.zoom = Math.max(camera.zoom, CONFIG.minDataZoom);
-        map.flyTo({ ...camera, essential: true });
+        flyToTarget({ center: camera.center, zoom: camera.zoom });
         return;
       }
     }
     if (result.center) {
-      map.flyTo({ center: result.center, zoom: 14, essential: true });
+      flyToTarget({ center: result.center, zoom: 14 });
     }
   }
 
