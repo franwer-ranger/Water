@@ -52,12 +52,7 @@ export function setupSearch(map, showToast) {
     }
   }
 
-  function select(result) {
-    // Deja el nombre elegido en el input, como en Google Maps.
-    input.value = result.place_name || result.text || input.value;
-    updateClearBtn();
-    close();
-    input.blur();
+  function navigate(result) {
     if (result.bbox) {
       const camera = map.cameraForBounds(
         [
@@ -77,6 +72,25 @@ export function setupSearch(map, showToast) {
     if (result.center) {
       map.flyTo({ center: result.center, zoom: 14, essential: true });
     }
+  }
+
+  function select(result) {
+    // Deja el nombre elegido en el input, como en Google Maps.
+    input.value = result.place_name || result.text || input.value;
+    updateClearBtn();
+    close();
+    input.blur();
+    // En móvil la selección se hace con el dedo (pointerdown) y preventDefault
+    // solo conserva el foco: NO suprime los eventos de ratón "fantasma" que el
+    // navegador sintetiza tras un toque. Como acabamos de vaciar la lista, ese
+    // mousedown fantasma cae sobre el lienzo del mapa, y MapLibre lo interpreta
+    // como el inicio de un gesto y aborta (map.stop) la animación de cámara en
+    // curso: el flyTo lanzado de forma síncrona se cancela al instante y el
+    // mapa no se mueve (en escritorio pointerdown y mousedown son el mismo
+    // evento sobre la opción, sin fantasma, y funciona). Aplazamos la
+    // navegación al siguiente turno del bucle de eventos, ya despachados esos
+    // eventos sintéticos, para que el vuelo no se interrumpa.
+    setTimeout(() => navigate(result), 0);
   }
 
   function open() {
