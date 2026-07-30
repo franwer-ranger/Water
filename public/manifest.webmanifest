@@ -1,7 +1,7 @@
 {
-  "name": "Fuentes de Madrid",
-  "short_name": "Fuentes",
-  "description": "Mapa interactivo de las fuentes de agua potable de Madrid.",
+  "name": "Fountly",
+  "short_name": "Fountly",
+  "description": "Mapa interactivo de fuentes de agua potable en todo el mundo (OpenStreetMap y datos oficiales donde existen).",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

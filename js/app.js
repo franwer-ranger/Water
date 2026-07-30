@@ -38,6 +38,29 @@ function setCount(n) {
   countEl.hidden = false;
 }
 
+// Fuentes filtradas cuyas coordenadas caen en el viewport actual.
+function filteredInView(map, state) {
+  const b = map.getBounds();
+  const west = b.getWest();
+  const south = b.getSouth();
+  const east = b.getEast();
+  const north = b.getNorth();
+  return state.features.filter((f) => {
+    if (
+      f.properties.statusCat !== "unknown" &&
+      !state.activeCats.has(f.properties.statusCat)
+    ) {
+      return false;
+    }
+    const [lng, lat] = f.geometry.coordinates;
+    return lng >= west && lng <= east && lat >= south && lat <= north;
+  });
+}
+
+function updateViewportCount(map) {
+  setCount(filteredInView(map, store.get()).length);
+}
+
 // ── Bottom-sheet ─────────────────────────────────────────────────────────────
 function openSheet(props, coords) {
   if (!sheetEl || !sheetBody) return;
@@ -78,7 +101,7 @@ function initMap() {
   return map;
 }
 
-// ── Render: aplica filtros y actualiza mapa + contador ──────────────────────
+// ── Render: aplica filtros y actualiza mapa + contador del viewport ─────────
 function render(map, state) {
   const source = map.getSource(SOURCE_ID);
   if (!source) return;
@@ -88,7 +111,7 @@ function render(map, state) {
       state.activeCats.has(f.properties.statusCat)
   );
   source.setData({ type: "FeatureCollection", features });
-  setCount(features.length);
+  updateViewportCount(map);
 }
 
 // ── Carga de fuentes por viewport ────────────────────────────────────────────
@@ -275,6 +298,8 @@ async function main() {
         showToast("Toca un punto para ver los detalles.");
       }
     });
+    // Contador al pan/zoom; datos con debounce (Overpass).
+    map.on("moveend", () => updateViewportCount(map));
     map.on("moveend", debounce(() => refreshData(map), 400));
   });
 }

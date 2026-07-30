@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Product: Fountly (fountly.app) — SPA map of drinking water fountains.
+  Stack: Vanilla JS, Vite 7, MapLibre GL JS 5, MapTiler (tiles + geocoding), GitHub Pages.
+  No backend: static site. Data via Overpass (OSM amenity=drinking_water) + official adapters.
+  Madrid is the first official exception (~2270 fountains with operational status) in public/data/fuentes.geojson.
+  Architecture: js/app.js orchestrates; js/sources/{osm,madrid,registry}.js adapters; js/markers.js layers + bottom sheet;
+  js/search.js geocoding; js/geolocation.js; js/data.js merge; js/store.js minimal reactive store.
+  Normalized feature fields: id, source, sourceName, name, address, area, statusCat (ok|warn|off|unknown), statusText, geometry.
+  Conventions: keep adapters pluggable via registry EXCEPTIONS; prefer small focused changes; Spanish UI copy; preserve glassmorphism visual language unless redesigning.
+  Product stance: free public tool, no user accounts; no gamification / cloud favorites / social profiles.
+  CI: deploy.yml → GitHub Pages; update-data.yml daily for Madrid dataset.
+
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+    - Prefer incremental scope that fits a static SPA (no new backend unless explicitly justified)
+  design:
+    - Prefer extending existing adapters/store/markers over new frameworks
+    - Call out data-source unknowns and spikes when data provenance is unclear
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - First task should be spike/investigate when data source is uncertain
+
+operations:
+  apply:
+    guidance:
+      - Keep test summaries concise
+  archive:
+    guidance:
+      - Summarize the archive outcome before finishing
