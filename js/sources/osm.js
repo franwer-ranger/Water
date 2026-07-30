@@ -1,4 +1,5 @@
 import { CONFIG } from "../config.js";
+import { amenitiesFromTags } from "../amenities.js";
 
 // Adapter de OpenStreetMap vía Overpass: fuentes de agua potable de todo el
 // mundo (`amenity=drinking_water`), cargadas bajo demanda por zona.
@@ -69,6 +70,7 @@ function normalizar(el) {
       area: null,
       statusCat: "unknown",
       statusText: null,
+      amenities: amenitiesFromTags(tags),
     },
     geometry: { type: "Point", coordinates: [lon, lat] },
   };

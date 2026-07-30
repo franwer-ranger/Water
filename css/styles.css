@@ -555,6 +555,27 @@ body {
   background: var(--color-off);
 }
 
+.sheet__amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amenity-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: rgba(0, 133, 199, 0.1);
+  border: 1px solid rgba(0, 133, 199, 0.22);
+}
+
 .sheet__btn {
   display: flex;
   align-items: center;

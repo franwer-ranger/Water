@@ -46,6 +46,7 @@ function normalizar(feature) {
       area: area || null,
       statusCat: estadoCategoria(p.estado),
       statusText: ESTADO_TEXTO[p.estado] || "Estado desconocido",
+      amenities: [],
     },
     geometry: feature.geometry,
   };

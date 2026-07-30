@@ -1,4 +1,5 @@
 import { CONFIG } from "./config.js";
+import { normalizeAmenities } from "./amenities.js";
 import { getUserLatLng } from "./geolocation.js";
 
 // ── Estados normalizados ────────────────────────────────────────────────────
@@ -128,6 +129,18 @@ export function detailHtml(props, coords) {
         statusText
       )}</span>`
     );
+  }
+
+  const amenities = normalizeAmenities(props);
+  if (amenities.length) {
+    parts.push('<ul class="sheet__amenities" aria-label="Detalles">');
+    for (const a of amenities) {
+      const text = a.valueLabel ? `${a.label}: ${a.valueLabel}` : a.label;
+      parts.push(
+        `<li class="amenity-chip">${escapeHtml(text)}</li>`
+      );
+    }
+    parts.push("</ul>");
   }
 
   // El botón "Cómo llegar" se muestra salvo en fuentes fuera de servicio.
