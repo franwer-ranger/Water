@@ -18,22 +18,15 @@ El sistema SHALL mostrar una lista de fuentes cercanas al usuario cuando se acti
 - **THEN** la lista (o un mensaje asociado) indica que no hay resultados cercanos
 
 ### Requirement: Contenido de cada ítem
-Cada ítem de la lista SHALL mostrar distancia aproximada y la mejor etiqueta disponible (nombre, dirección o área), más el estado operativo cuando exista (`ok` / `warn` / `off`).
-
-#### Scenario: Fuente Madrid operativa
-- **WHEN** una fuente cercana tiene `statusCat` distinto de `unknown`
-- **THEN** el ítem muestra la píldora o texto de estado correspondiente
+Cada ítem de la lista SHALL mostrar distancia aproximada y la mejor etiqueta disponible (nombre, dirección o área). El estado operativo oficial, si existe, MAY mostrarse como texto suave breve o omitirse en la lista (el detalle completo vive en la ficha).
 
 #### Scenario: Fuente OSM sin nombre
 - **WHEN** una fuente cercana no tiene nombre
 - **THEN** el ítem usa dirección, área, o un fallback genérico (“Fuente”)
 
-### Requirement: Respeto de filtros
-La lista SHALL incluir solo fuentes que pasen los filtros de estado activos en ese momento.
-
-#### Scenario: Filtro oculta cerradas
-- **WHEN** el usuario desactiva el filtro de cerradas y hay fuentes cerradas cerca
-- **THEN** esas fuentes no aparecen en la lista
+#### Scenario: Fuente con estado oficial
+- **WHEN** una fuente cercana tiene `statusCat` distinto de `unknown`
+- **THEN** el ítem no usa semáforo verde/ámbar/rojo como elemento principal; si muestra estado, usa lenguaje no tajante o lo omite
 
 ### Requirement: Selección desde la lista
 Al elegir un ítem, el sistema SHALL centrar el mapa en esa fuente y abrir su ficha de detalle.
