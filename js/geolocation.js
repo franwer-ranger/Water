@@ -10,7 +10,14 @@ export function getUserLatLng() {
   return lastUserLatLng;
 }
 
-export function setupGeolocation(map, button, showToast) {
+/**
+ * @param {maplibregl.Map} map
+ * @param {HTMLElement|null} button
+ * @param {(text: string, persist?: boolean) => void} showToast
+ * @param {(latLng: [number, number]) => void} [onLocated]
+ *   Callback tras fijar la ubicación (antes del flyTo).
+ */
+export function setupGeolocation(map, button, showToast, onLocated) {
   if (!button) return;
 
   button.addEventListener("click", () => {
@@ -40,6 +47,7 @@ export function setupGeolocation(map, button, showToast) {
             .setLngLat([lng, lat])
             .addTo(map);
         }
+        if (typeof onLocated === "function") onLocated([lat, lng]);
         map.flyTo({ center: [lng, lat], zoom: 16, essential: true });
         showToast("Mostrando fuentes cerca de tu ubicación.");
       },

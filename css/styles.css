@@ -448,6 +448,207 @@ body {
   }
 }
 
+/* ── Lista de fuentes cercanas ────────────────────────────────────────────── */
+.nearby {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(max(20px, env(safe-area-inset-bottom)) + 80px);
+  z-index: 28;
+  width: auto;
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nearby[hidden] {
+  display: none;
+}
+
+.nearby__bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 6px;
+}
+
+.nearby__toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+}
+
+.nearby__toggle:hover {
+  background: rgba(17, 40, 60, 0.06);
+}
+
+.nearby__title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby__chevron {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--ink-soft);
+  border-bottom: 2px solid var(--ink-soft);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  margin-top: -4px;
+}
+
+.nearby.is-collapsed .nearby__chevron {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
+.nearby__close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.nearby__close:hover {
+  background: rgba(17, 40, 60, 0.08);
+}
+
+.nearby__body {
+  max-height: min(42vh, 320px);
+  overflow-y: auto;
+  border-top: 1px solid rgba(17, 40, 60, 0.08);
+  transition: max-height 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.nearby.is-collapsed .nearby__body {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  border-top-color: transparent;
+  pointer-events: none;
+}
+
+.nearby__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.nearby__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.nearby__item:hover,
+.nearby__item:focus-visible {
+  background: rgba(0, 133, 199, 0.1);
+  outline: none;
+}
+
+.nearby__item:active {
+  background: rgba(0, 133, 199, 0.16);
+}
+
+.nearby__dist {
+  flex: none;
+  min-width: 3.4em;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-strong);
+}
+
+.nearby__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nearby__label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby__sub {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby__status {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.nearby__status--ok {
+  background: var(--color-ok);
+}
+.nearby__status--warn {
+  background: var(--color-warn);
+}
+.nearby__status--off {
+  background: var(--color-off);
+}
+
+.nearby__empty {
+  margin: 0;
+  padding: 14px 16px 18px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
 /* ── Bottom sheet (detalle) ───────────────────────────────────────────────── */
 .sheet {
   position: fixed;
@@ -703,7 +904,10 @@ body {
   .filter-opt,
   .filter-opt__check,
   .search__results,
-  .sheet {
+  .sheet,
+  .nearby,
+  .nearby__body,
+  .nearby__chevron {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
   }
