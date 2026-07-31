@@ -10,5 +10,5 @@
 
 ## 3. Verificación
 
-- [ ] 3.1 Pan/zoom en Madrid: el número baja/sube con la vista, no solo crece
-- [ ] 3.2 Cambiar filtros y comprobar que el contador respeta estado + viewport
+- [x] 3.1 Pan/zoom en Madrid: el número baja/sube con la vista, no solo crece
+- [x] 3.2 Cambiar filtros y comprobar que el contador respeta estado + viewport

@@ -2,17 +2,28 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { CONFIG } from "./config.js";
-import { loadArea, getAllFeatures } from "./data.js";
+import {
+  loadArea,
+  getAllFeatures,
+  resolveFeatureById,
+} from "./data.js";
 import { addFuentesLayers, detailHtml, SOURCE_ID } from "./markers.js";
 import { setupGeolocation } from "./geolocation.js";
 import { setupSearch } from "./search.js";
 import { createStore } from "./store.js";
+import {
+  readFountainLink,
+  setFountainInUrl,
+  clearFountainFromUrl,
+  shareFountain,
+} from "./share.js";
 
 const countEl = document.getElementById("count");
 const toastEl = document.getElementById("toast");
 const sheetEl = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
 let toastTimer;
+let sheetOpen = false;
 
 // Estado compartido: features cargadas y filtros de estado activos. Los
 // filtros solo aplican a fuentes con estado real; las 'unknown' (OSM)
@@ -62,16 +73,54 @@ function updateViewportCount(map) {
 }
 
 // ── Bottom-sheet ─────────────────────────────────────────────────────────────
-function openSheet(props, coords) {
+function openSheet(props, coords, { syncUrl = true } = {}) {
   if (!sheetEl || !sheetBody) return;
   sheetBody.innerHTML = detailHtml(props, coords);
   sheetEl.hidden = false;
+  sheetOpen = true;
   requestAnimationFrame(() => sheetEl.classList.add("is-open"));
+  if (syncUrl && props.id) {
+    setFountainInUrl(props.id, coords);
+  }
 }
 
 function closeSheet() {
   if (!sheetEl) return;
   sheetEl.classList.remove("is-open");
+  sheetOpen = false;
+  clearFountainFromUrl();
+}
+
+function focusFountain(map, feature) {
+  const coords = feature.geometry.coordinates;
+  openSheet(feature.properties, coords);
+  const zoom = Math.max(map.getZoom(), 16);
+  map.easeTo({ center: coords, zoom, offset: [0, -80] });
+}
+
+async function resolveDeepLink(map, link) {
+  if (!link?.id) return;
+
+  if (link.coords) {
+    map.easeTo({
+      center: link.coords,
+      zoom: Math.max(map.getZoom(), 15),
+      offset: [0, -80],
+    });
+  }
+
+  showToast("Buscando fuente…", true);
+  const { feature, error } = await resolveFeatureById(link.id);
+  if (feature) {
+    store.set({ features: getAllFeatures() });
+    focusFountain(map, feature);
+    showToast("Fuente encontrada.");
+    return;
+  }
+
+  console.warn("[deep-link]", link.id, error);
+  showToast("No se encontró esa fuente.");
+  clearFountainFromUrl();
 }
 
 function initMap() {
@@ -218,6 +267,27 @@ function wireInteractions(map) {
   }
 }
 
+function wireSheetActions() {
+  if (!sheetBody) return;
+  sheetBody.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-share-id]");
+    if (!btn) return;
+    const id = btn.getAttribute("data-share-id");
+    const lng = Number(btn.getAttribute("data-share-lng"));
+    const lat = Number(btn.getAttribute("data-share-lat"));
+    const title = btn.getAttribute("data-share-title") || undefined;
+    const coords =
+      Number.isFinite(lng) && Number.isFinite(lat) ? [lng, lat] : null;
+    try {
+      const result = await shareFountain(id, coords, title);
+      if (result === "copied") showToast("Enlace copiado.");
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      showToast("No se pudo compartir el enlace.");
+    }
+  });
+}
+
 // ── Menú de filtros (abrir/cerrar popover) ────────────────────────────────────
 function setupFilterMenu() {
   const menu = document.getElementById("filter-menu");
@@ -238,7 +308,10 @@ function setupFilterMenu() {
     if (!menu.contains(e.target)) setOpen(false);
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setOpen(false);
+    if (e.key === "Escape") {
+      setOpen(false);
+      if (sheetOpen) closeSheet();
+    }
   });
 }
 
@@ -266,6 +339,7 @@ function setupFilters() {
 
 async function main() {
   const map = initMap();
+  const deepLink = readFountainLink();
   setupGeolocation(map, document.getElementById("locate-btn"), showToast);
   setupSearch(map, showToast);
 
@@ -281,6 +355,7 @@ async function main() {
   if (sheetClose) sheetClose.addEventListener("click", closeSheet);
   setupFilterMenu();
   setupFilters();
+  wireSheetActions();
 
   store.subscribe((state) => render(map, state));
 
@@ -291,10 +366,16 @@ async function main() {
     });
     wireInteractions(map);
 
-    // Carga inicial de la zona visible + recargas al mover el mapa.
-    showToast("Cargando fuentes…", true);
+    // Deep link: resolver la fuente sin bloquear el mapa; la carga del
+    // viewport sigue en paralelo.
+    if (deepLink) {
+      resolveDeepLink(map, deepLink);
+    } else {
+      showToast("Cargando fuentes…", true);
+    }
+
     refreshData(map).then(() => {
-      if (store.get().features.length > 0) {
+      if (!deepLink && store.get().features.length > 0) {
         showToast("Toca un punto para ver los detalles.");
       }
     });

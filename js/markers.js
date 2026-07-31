@@ -143,15 +143,29 @@ export function detailHtml(props, coords) {
     parts.push("</ul>");
   }
 
-  // El botón "Cómo llegar" se muestra salvo en fuentes fuera de servicio.
-  // 'warn' (cerrada temporalmente) lo mantiene: ese estado no es fiable y
-  // muchas fuentes marcadas así están realmente abiertas.
+  // Acciones: Cómo llegar (primario) + Compartir (secundario glass).
+  const actions = [];
   if (cat !== "off") {
     const url = directionsUrl(coords[1], coords[0]);
-    parts.push(
+    actions.push(
       `<a class="sheet__btn" href="${url}" target="_blank" rel="noopener">` +
         '<span aria-hidden="true">🧭</span> Cómo llegar</a>'
     );
+  }
+  if (props.id) {
+    const lng = coords[0];
+    const lat = coords[1];
+    const title = props.name || props.address || "Fuente de agua potable";
+    actions.push(
+      `<button type="button" class="sheet__btn sheet__btn--share" ` +
+        `data-share-id="${escapeAttr(props.id)}" ` +
+        `data-share-lng="${lng}" data-share-lat="${lat}" ` +
+        `data-share-title="${escapeAttr(title)}">` +
+        '<span aria-hidden="true">🔗</span> Compartir</button>'
+    );
+  }
+  if (actions.length) {
+    parts.push(`<div class="sheet__actions">${actions.join("")}</div>`);
   }
 
   if (props.sourceName) {
@@ -166,4 +180,8 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
   );
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str);
 }

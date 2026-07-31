@@ -99,6 +99,48 @@ async function queryOverpass(bboxes) {
   return json.elements || [];
 }
 
+/** Fetch puntual por id OSM (`node`/`way`/`relation`) para deep links. */
+export async function fetchByOsmId(osmType, osmId) {
+  const featureId = `osm:${osmType}/${osmId}`;
+  if (featuresById.has(featureId)) return featuresById.get(featureId);
+
+  if (Date.now() < cooldownUntil) {
+    const err = new Error("Overpass en cooldown");
+    err.status = 429;
+    throw err;
+  }
+
+  const wait = lastFetchAt + MIN_INTERVAL_MS - Date.now();
+  if (wait > 0) await sleep(wait);
+  lastFetchAt = Date.now();
+
+  const query = `[out:json][timeout:25];${osmType}(${osmId});out center;`;
+  let res;
+  try {
+    res = await fetch(CONFIG.overpassEndpoint, {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+  } catch (err) {
+    throw err;
+  }
+  if (!res.ok) {
+    const err = new Error(`Overpass HTTP ${res.status}`);
+    err.status = res.status;
+    if (res.status === 429 || res.status === 504) {
+      cooldownUntil = Date.now() + COOLDOWN_MS;
+    }
+    throw err;
+  }
+  const json = await res.json();
+  const el = (json.elements || [])[0];
+  if (!el) return null;
+  const feature = normalizar(el);
+  if (feature) featuresById.set(feature.properties.id, feature);
+  return feature;
+}
+
 // Devuelve todas las fuentes OSM conocidas, pidiendo a Overpass solo las
 // celdas del bbox aún no cargadas. Si Overpass falla, no se marca nada como
 // cargado (se reintentará en el siguiente movimiento del mapa); tras un
