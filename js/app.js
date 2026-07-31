@@ -102,15 +102,26 @@ async function resolveDeepLink(map, link) {
   if (!link?.id) return;
 
   if (link.coords) {
-    map.easeTo({
+    map.jumpTo({
       center: link.coords,
       zoom: Math.max(map.getZoom(), 15),
-      offset: [0, -80],
     });
   }
 
   showToast("Buscando fuente…", true);
-  const { feature, error } = await resolveFeatureById(link.id);
+
+  const tryResolve = () =>
+    resolveFeatureById(link.id, { coords: link.coords || undefined });
+
+  let { feature, error, transient } = await tryResolve();
+
+  // Overpass saturado ≠ fuente inexistente: reintenta tras el cooldown típico.
+  if (!feature && transient) {
+    showToast("El servidor de OSM está saturado; reintento en unos segundos…", true);
+    await new Promise((r) => setTimeout(r, 21000));
+    ({ feature, error, transient } = await tryResolve());
+  }
+
   if (feature) {
     store.set({ features: getAllFeatures() });
     focusFountain(map, feature);
@@ -119,6 +130,12 @@ async function resolveDeepLink(map, link) {
   }
 
   console.warn("[deep-link]", link.id, error);
+  if (transient) {
+    // Deja la URL y el mapa; un pan posterior puede completar la carga.
+    showToast("No se pudo cargar la fuente ahora. Prueba a mover el mapa.");
+    return;
+  }
+
   showToast("No se encontró esa fuente.");
   clearFountainFromUrl();
 }
@@ -359,27 +376,28 @@ async function main() {
 
   store.subscribe((state) => render(map, state));
 
-  map.on("load", () => {
+  map.on("load", async () => {
     addFuentesLayers(map, {
       type: "FeatureCollection",
       features: [],
     });
     wireInteractions(map);
 
-    // Deep link: resolver la fuente sin bloquear el mapa; la carga del
-    // viewport sigue en paralelo.
+    // Deep link primero (una sola ruta Overpass); luego rellena el viewport.
+    // Los listeners de moveend se registran después: si no, jumpTo/easeTo
+    // del deep link dispara otro fetchArea en paralelo → 429/504 y toast
+    // falso de «fuente no encontrada».
     if (deepLink) {
-      resolveDeepLink(map, deepLink);
+      await resolveDeepLink(map, deepLink);
+      await refreshData(map);
     } else {
       showToast("Cargando fuentes…", true);
-    }
-
-    refreshData(map).then(() => {
-      if (!deepLink && store.get().features.length > 0) {
+      await refreshData(map);
+      if (store.get().features.length > 0) {
         showToast("Toca un punto para ver los detalles.");
       }
-    });
-    // Contador al pan/zoom; datos con debounce (Overpass).
+    }
+
     map.on("moveend", () => updateViewportCount(map));
     map.on("moveend", debounce(() => refreshData(map), 400));
   });

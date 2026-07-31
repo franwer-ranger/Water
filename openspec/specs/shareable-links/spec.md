@@ -14,8 +14,12 @@ El sistema SHALL aceptar un parámetro de URL que identifique una fuente por su 
 - **THEN** el mapa se centra en esa fuente y se muestra el detalle
 
 #### Scenario: Id desconocido o no encontrado
-- **WHEN** el id no corresponde a ninguna fuente resoluble
+- **WHEN** el id no corresponde a ninguna fuente resoluble tras intentos definitivos
 - **THEN** la app carga el mapa normal y muestra un aviso de que no se encontró la fuente
+
+#### Scenario: Error transitorio de Overpass
+- **WHEN** la resolución falla por saturación o timeout del servidor de datos (p. ej. HTTP 429/504)
+- **THEN** el sistema NO trata el fallo como «fuente inexistente»: reintenta o invita a reintentar, y conserva el parámetro de URL
 
 ### Requirement: Compartir desde la ficha
 El detalle de una fuente abierta SHALL ofrecer una acción para compartir o copiar el enlace a esa fuente.

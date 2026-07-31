@@ -10,11 +10,29 @@ import { parseFountainId } from "./share.js";
 const officialById = new Map();
 const osmById = new Map();
 
+/** Padding en grados (~1,5–2 km) para cargar el entorno de un deep link. */
+const DEEP_LINK_PAD_DEG = 0.015;
+
 function ingestFeature(feature) {
   if (!feature?.properties?.id) return;
   const target =
     feature.properties.source === "osm" ? osmById : officialById;
   target.set(feature.properties.id, feature);
+}
+
+function bboxAround(coords, pad = DEEP_LINK_PAD_DEG) {
+  const [lng, lat] = coords;
+  return [lng - pad, lat - pad, lng + pad, lat + pad];
+}
+
+export function isTransientDataError(error) {
+  if (!error) return false;
+  const status = error.status;
+  if (status === 429 || status === 504 || status === 502 || status === 408) {
+    return true;
+  }
+  // Fallo de red / fetch abortado.
+  return error.name === "TypeError" || error.name === "AbortError";
 }
 
 // Carga las fuentes visibles en el bbox [oeste, sur, este, norte].
@@ -55,10 +73,13 @@ export function findFeatureById(id) {
 }
 
 /**
- * Resuelve una fuente por id canónico (caché, dataset Madrid o Overpass).
- * @returns {Promise<{feature: object|null, error?: Error}>}
+ * Resuelve una fuente por id canónico.
+ * Con `coords`, prioriza carga por bbox (mismo camino que el mapa) antes de
+ * un Overpass por id — evita carreras y rate limits en deep links compartidos.
+ *
+ * @returns {Promise<{feature: object|null, error?: Error, transient?: boolean}>}
  */
-export async function resolveFeatureById(id) {
+export async function resolveFeatureById(id, { coords } = {}) {
   const cached = findFeatureById(id);
   if (cached) return { feature: cached };
 
@@ -73,12 +94,32 @@ export async function resolveFeatureById(id) {
     }
 
     if (parsed.source === "osm") {
+      // 1) Si hay coords (links compartidos), cargar el entorno como el mapa.
+      if (coords) {
+        const { errors } = await loadArea(bboxAround(coords));
+        const hit = findFeatureById(id);
+        if (hit) return { feature: hit };
+
+        const osmErr = errors.find((e) => e.source === "osm")?.error;
+        if (osmErr && isTransientDataError(osmErr)) {
+          return { feature: null, error: osmErr, transient: true };
+        }
+      }
+
+      // 2) Fallback: Overpass por id (sin coords, o bbox sin el punto).
       const feature = await fetchByOsmId(parsed.osmType, parsed.osmId);
-      if (feature) ingestFeature(feature);
-      return { feature: feature || null };
+      if (feature) {
+        ingestFeature(feature);
+        return { feature };
+      }
+      return { feature: null };
     }
   } catch (error) {
-    return { feature: null, error };
+    return {
+      feature: null,
+      error,
+      transient: isTransientDataError(error),
+    };
   }
 
   return { feature: null };
