@@ -2,33 +2,37 @@ import { CONFIG } from "./config.js";
 import { normalizeAmenities } from "./amenities.js";
 import { getUserLatLng } from "./geolocation.js";
 
-// ── Estados normalizados ────────────────────────────────────────────────────
-// 'unknown' (fuentes sin estado fiable, p. ej. OSM) se pinta con el color de
-// marca y sin píldora de estado.
-export const COLORS = {
-  ok: "#16a34a",
-  warn: "#f59e0b",
-  off: "#dc2626",
-  unknown: "#0085c7",
-};
-
-// Expresión MapLibre: color del punto según statusCat normalizado.
-const statusColorExpr = [
-  "match",
-  ["get", "statusCat"],
-  "ok",
-  COLORS.ok,
-  "warn",
-  COLORS.warn,
-  "off",
-  COLORS.off,
-  /* unknown y resto */ COLORS.unknown,
-];
+// Color unificado de marca para todas las fuentes (Madrid y OSM).
+export const FOUNTAIN_COLOR = "#0085c7";
 
 export const SOURCE_ID = "fuentes";
+const DROP_IMAGE_ID = "fountain-drop";
+
+/** Canvas 64×64 con gota blanca (para symbol layer). */
+function createDropImage() {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const cx = size / 2;
+  const cy = size / 2 + 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 22);
+  ctx.bezierCurveTo(cx + 18, cy - 4, cx + 16, cy + 14, cx, cy + 18);
+  ctx.bezierCurveTo(cx - 16, cy + 14, cx - 18, cy - 4, cx, cy - 22);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  return canvas;
+}
 
 // Añade la fuente (source) GeoJSON con clustering y las capas de render.
 export function addFuentesLayers(map, geojson) {
+  if (!map.hasImage(DROP_IMAGE_ID)) {
+    map.addImage(DROP_IMAGE_ID, createDropImage(), { pixelRatio: 2 });
+  }
+
   map.addSource(SOURCE_ID, {
     type: "geojson",
     data: geojson,
@@ -44,7 +48,7 @@ export function addFuentesLayers(map, geojson) {
     source: SOURCE_ID,
     filter: ["has", "point_count"],
     paint: {
-      "circle-color": COLORS.unknown,
+      "circle-color": FOUNTAIN_COLOR,
       "circle-opacity": 0.9,
       "circle-radius": ["step", ["get", "point_count"], 16, 25, 21, 100, 27],
       "circle-stroke-width": 4,
@@ -66,45 +70,63 @@ export function addFuentesLayers(map, geojson) {
     paint: { "text-color": "#ffffff" },
   });
 
-  // Halo suave bajo cada punto individual (da sensación de profundidad).
+  // Halo suave bajo cada punto individual.
   map.addLayer({
     id: "fuentes-glow",
     type: "circle",
     source: SOURCE_ID,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-color": statusColorExpr,
+      "circle-color": FOUNTAIN_COLOR,
       "circle-opacity": 0.18,
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 7, 17, 16],
     },
   });
 
-  // Punto individual coloreado por estado.
+  // Punto individual (color unificado).
   map.addLayer({
     id: "fuentes-point",
     type: "circle",
     source: SOURCE_ID,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-color": statusColorExpr,
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 4, 17, 8],
+      "circle-color": FOUNTAIN_COLOR,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 6, 17, 11],
       "circle-stroke-width": 2,
       "circle-stroke-color": "#ffffff",
     },
   });
+
+  // Icono de gota centrado en cada fuente.
+  map.addLayer({
+    id: "fuentes-icon",
+    type: "symbol",
+    source: SOURCE_ID,
+    filter: ["!", ["has", "point_count"]],
+    layout: {
+      "icon-image": DROP_IMAGE_ID,
+      "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.28, 17, 0.42],
+      "icon-allow-overlap": true,
+      "icon-ignore-placement": true,
+    },
+  });
+}
+
+// Aviso suave a partir del estado oficial (datos no del todo fiables).
+function statusHint(cat) {
+  if (cat === "warn") return "Posiblemente cerrada temporalmente";
+  if (cat === "off") return "Posiblemente fuera de servicio";
+  return null;
 }
 
 // ── Panel de detalle ─────────────────────────────────────────────────────────
-// URL de Google Maps con ruta a pie hasta la fuente.
 function directionsUrl(lat, lng) {
   const origin = getUserLatLng();
   const o = origin ? `&origin=${origin[0]},${origin[1]}` : "";
   return `https://www.google.com/maps/dir/?api=1${o}&destination=${lat},${lng}&travelmode=walking`;
 }
 
-// HTML interior del bottom-sheet de detalle sobre las propiedades
-// normalizadas (name/address/area opcionales, píldora de estado solo si la
-// source aporta estado, atribución de la source). coords viene como [lng, lat].
+// HTML interior del bottom-sheet. coords viene como [lng, lat].
 export function detailHtml(props, coords) {
   const cat = props.statusCat || "unknown";
   const parts = [];
@@ -122,11 +144,11 @@ export function detailHtml(props, coords) {
     parts.push(`<p class="sheet__zona">${escapeHtml(props.area)}</p>`);
   parts.push("</div></div>");
 
-  if (cat !== "unknown") {
-    const statusText = props.statusText || "Estado desconocido";
+  const hint = statusHint(cat);
+  if (hint) {
     parts.push(
-      `<span class="estado estado--${cat}"><span class="estado__dot"></span>${escapeHtml(
-        statusText
+      `<span class="status-hint"><span class="status-hint__icon" aria-hidden="true">⚠</span>${escapeHtml(
+        hint
       )}</span>`
     );
   }
@@ -143,15 +165,13 @@ export function detailHtml(props, coords) {
     parts.push("</ul>");
   }
 
-  // Acciones: Cómo llegar (primario) + Compartir (secundario glass).
+  // Acciones: Cómo llegar (siempre) + Compartir.
   const actions = [];
-  if (cat !== "off") {
-    const url = directionsUrl(coords[1], coords[0]);
-    actions.push(
-      `<a class="sheet__btn" href="${url}" target="_blank" rel="noopener">` +
-        '<span aria-hidden="true">🧭</span> Cómo llegar</a>'
-    );
-  }
+  const url = directionsUrl(coords[1], coords[0]);
+  actions.push(
+    `<a class="sheet__btn" href="${url}" target="_blank" rel="noopener">` +
+      '<span aria-hidden="true">🧭</span> Cómo llegar</a>'
+  );
   if (props.id) {
     const lng = coords[0];
     const lat = coords[1];
@@ -164,9 +184,7 @@ export function detailHtml(props, coords) {
         '<span aria-hidden="true">🔗</span> Compartir</button>'
     );
   }
-  if (actions.length) {
-    parts.push(`<div class="sheet__actions">${actions.join("")}</div>`);
-  }
+  parts.push(`<div class="sheet__actions">${actions.join("")}</div>`);
 
   if (props.sourceName) {
     parts.push(

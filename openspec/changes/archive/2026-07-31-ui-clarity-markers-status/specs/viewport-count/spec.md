@@ -1,10 +1,4 @@
-# viewport-count Specification
-
-## Purpose
-
-Mostrar cuántas fuentes hay en la vista actual del mapa, no un acumulado de sesión que confunde.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Contador por viewport
 El contador SHALL reflejar el número de fuentes cuyas coordenadas caen dentro de los bounds actuales del mapa, sin aplicar filtros por estado operativo.

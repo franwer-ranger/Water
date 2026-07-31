@@ -43,7 +43,13 @@ export function setupGeolocation(map, button, showToast, onLocated) {
         } else {
           const el = document.createElement("div");
           el.className = "user-marker";
-          userMarker = new maplibregl.Marker({ element: el })
+          el.setAttribute("aria-hidden", "true");
+          const pulse = document.createElement("span");
+          pulse.className = "user-marker__pulse";
+          const dot = document.createElement("span");
+          dot.className = "user-marker__dot";
+          el.append(pulse, dot);
+          userMarker = new maplibregl.Marker({ element: el, anchor: "center" })
             .setLngLat([lng, lat])
             .addTo(map);
         }
