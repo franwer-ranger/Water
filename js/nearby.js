@@ -22,14 +22,12 @@ export function distanceFromPoint(feature, originLatLng) {
 
 /**
  * Top-N fuentes dentro del radio, ordenadas por distancia.
- * Respetan filtros de estado (unknown siempre pasa).
  * @param {[number, number]} originLatLng [lat, lng]
  * @returns {{ feature: object, distanceM: number }[]}
  */
 export function getNearbyFeatures(
   originLatLng,
   features,
-  activeCats,
   {
     radiusM = CONFIG.nearbyRadiusM,
     maxResults = CONFIG.nearbyMaxResults,
@@ -39,8 +37,6 @@ export function getNearbyFeatures(
 
   const scored = [];
   for (const feature of features) {
-    const cat = feature.properties?.statusCat;
-    if (cat !== "unknown" && !activeCats.has(cat)) continue;
     if (feature.geometry?.type !== "Point") continue;
 
     const distanceM = distanceFromPoint(feature, originLatLng);

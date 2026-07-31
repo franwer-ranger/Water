@@ -37,12 +37,9 @@ let toastTimer;
 let sheetOpen = false;
 let nearbyVisible = false;
 
-// Estado compartido: features cargadas y filtros de estado activos. Los
-// filtros solo aplican a fuentes con estado real; las 'unknown' (OSM)
-// siempre se muestran.
+// Estado compartido: features cargadas en la sesión.
 const store = createStore({
   features: [],
-  activeCats: new Set(["ok", "warn", "off"]),
 });
 
 // Mensajes transitorios sobre el mapa (carga, geolocalización, errores).
@@ -61,27 +58,21 @@ function setCount(n) {
   countEl.hidden = false;
 }
 
-// Fuentes filtradas cuyas coordenadas caen en el viewport actual.
-function filteredInView(map, state) {
+// Fuentes cuyas coordenadas caen en el viewport actual.
+function featuresInView(map, state) {
   const b = map.getBounds();
   const west = b.getWest();
   const south = b.getSouth();
   const east = b.getEast();
   const north = b.getNorth();
   return state.features.filter((f) => {
-    if (
-      f.properties.statusCat !== "unknown" &&
-      !state.activeCats.has(f.properties.statusCat)
-    ) {
-      return false;
-    }
     const [lng, lat] = f.geometry.coordinates;
     return lng >= west && lng <= east && lat >= south && lat <= north;
   });
 }
 
 function updateViewportCount(map) {
-  setCount(filteredInView(map, store.get()).length);
+  setCount(featuresInView(map, store.get()).length);
 }
 
 // ── Bottom-sheet ─────────────────────────────────────────────────────────────
@@ -111,14 +102,6 @@ function focusFountain(map, feature) {
 }
 
 // ── Lista de fuentes cercanas ────────────────────────────────────────────────
-function statusShortLabel(props) {
-  const cat = props.statusCat;
-  if (cat === "ok") return props.statusText || "Operativa";
-  if (cat === "warn") return props.statusText || "Cerrada";
-  if (cat === "off") return props.statusText || "Fuera de servicio";
-  return null;
-}
-
 function setNearbyOpen(open, { expanded = true } = {}) {
   if (!nearbyEl) return;
   nearbyVisible = open;
@@ -135,9 +118,7 @@ function renderNearbyList(map) {
 
   const origin = getUserLatLng();
   const state = store.get();
-  const items = origin
-    ? getNearbyFeatures(origin, state.features, state.activeCats)
-    : [];
+  const items = origin ? getNearbyFeatures(origin, state.features) : [];
 
   const n = items.length;
   if (nearbyTitleEl) {
@@ -181,14 +162,6 @@ function renderNearbyList(map) {
 
     btn.appendChild(dist);
     btn.appendChild(meta);
-
-    const statusLabel = statusShortLabel(props);
-    if (statusLabel && props.statusCat !== "unknown") {
-      const status = document.createElement("span");
-      status.className = `nearby__status nearby__status--${props.statusCat}`;
-      status.textContent = statusLabel;
-      btn.appendChild(status);
-    }
 
     btn.addEventListener("click", () => focusFountain(map, feature));
     li.appendChild(btn);
@@ -285,16 +258,11 @@ function initMap() {
   return map;
 }
 
-// ── Render: aplica filtros y actualiza mapa + contador del viewport ─────────
+// ── Render: actualiza mapa + contador del viewport ───────────────────────────
 function render(map, state) {
   const source = map.getSource(SOURCE_ID);
   if (!source) return;
-  const features = state.features.filter(
-    (f) =>
-      f.properties.statusCat === "unknown" ||
-      state.activeCats.has(f.properties.statusCat)
-  );
-  source.setData({ type: "FeatureCollection", features });
+  source.setData({ type: "FeatureCollection", features: state.features });
   updateViewportCount(map);
   if (nearbyVisible) renderNearbyList(map);
 }
@@ -387,17 +355,22 @@ function wireInteractions(map) {
     openSheet(feature.properties, feature.geometry.coordinates);
     map.easeTo({ center: feature.geometry.coordinates, offset: [0, -80] });
   });
+  map.on("click", "fuentes-icon", (e) => {
+    const feature = e.features[0];
+    openSheet(feature.properties, feature.geometry.coordinates);
+    map.easeTo({ center: feature.geometry.coordinates, offset: [0, -80] });
+  });
 
   // Click en el mapa vacío → cerrar panel.
   map.on("click", (e) => {
     const hits = map.queryRenderedFeatures(e.point, {
-      layers: ["fuentes-point", "clusters"],
+      layers: ["fuentes-point", "fuentes-icon", "clusters"],
     });
     if (!hits.length) closeSheet();
   });
 
   // Cursor de mano sobre elementos interactivos.
-  for (const id of ["clusters", "fuentes-point"]) {
+  for (const id of ["clusters", "fuentes-point", "fuentes-icon"]) {
     map.on("mouseenter", id, () => (map.getCanvas().style.cursor = "pointer"));
     map.on("mouseleave", id, () => (map.getCanvas().style.cursor = ""));
   }
@@ -424,53 +397,11 @@ function wireSheetActions() {
   });
 }
 
-// ── Menú de filtros (abrir/cerrar popover) ────────────────────────────────────
-function setupFilterMenu() {
-  const menu = document.getElementById("filter-menu");
-  const toggle = document.getElementById("filter-toggle");
-  if (!menu || !toggle) return;
-
-  const setOpen = (open) => {
-    menu.classList.toggle("is-open", open);
-    toggle.setAttribute("aria-expanded", String(open));
-  };
-
-  toggle.addEventListener("click", (e) => {
-    e.stopPropagation();
-    setOpen(!menu.classList.contains("is-open"));
-  });
-  // Clic fuera o Escape cierran el popover (clics dentro lo mantienen abierto).
-  document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target)) setOpen(false);
-  });
+function setupKeyboard() {
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      setOpen(false);
-      if (sheetOpen) closeSheet();
-      else if (nearbyVisible) setNearbyOpen(false);
-    }
-  });
-}
-
-// ── Filtros por estado ────────────────────────────────────────────────────────
-function setupFilters() {
-  const opts = document.querySelectorAll(".filter-opt[data-cat]");
-  const badge = document.getElementById("filter-badge");
-
-  opts.forEach((opt) => {
-    opt.addEventListener("click", () => {
-      const active = new Set(store.get().activeCats);
-      const cat = opt.dataset.cat;
-      if (active.has(cat) && active.size > 1) {
-        active.delete(cat);
-        opt.classList.remove("is-active");
-      } else {
-        active.add(cat);
-        opt.classList.add("is-active");
-      }
-      if (badge) badge.hidden = active.size === 3; // marca que hay filtros activos
-      store.set({ activeCats: active });
-    });
+    if (e.key !== "Escape") return;
+    if (sheetOpen) closeSheet();
+    else if (nearbyVisible) setNearbyOpen(false);
   });
 }
 
@@ -493,8 +424,7 @@ async function main() {
 
   const sheetClose = document.getElementById("sheet-close");
   if (sheetClose) sheetClose.addEventListener("click", closeSheet);
-  setupFilterMenu();
-  setupFilters();
+  setupKeyboard();
   wireSheetActions();
 
   store.subscribe((state) => render(map, state));

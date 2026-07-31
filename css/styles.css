@@ -1,7 +1,4 @@
 :root {
-  --color-ok: #16a34a;
-  --color-warn: #f59e0b;
-  --color-off: #dc2626;
   --accent: #0085c7;
   --accent-strong: #006fa8;
   --ink: #11283c;
@@ -110,10 +107,6 @@ body {
   cursor: pointer;
 }
 
-.search__clear:hover {
-  background: rgba(17, 40, 60, 0.08);
-}
-
 .search__input::placeholder {
   color: var(--ink-soft);
   opacity: 0.8;
@@ -123,7 +116,7 @@ body {
   -webkit-appearance: none;
 }
 
-/* Dropdown de sugerencias (misma animación que el popover de filtros) */
+/* Dropdown de sugerencias */
 .search__results {
   position: absolute;
   top: calc(100% + 8px);
@@ -172,7 +165,18 @@ body {
   text-align: center;
 }
 
-/* ── Fila secundaria: filtros + contador (compactos, bajo el buscador) ────── */
+@keyframes optIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Contador bajo el buscador ────────────────────────────────────────────── */
 .toolbar {
   position: fixed;
   top: calc(max(12px, env(safe-area-inset-top)) + 58px);
@@ -198,166 +202,6 @@ body {
 
 .count[hidden] {
   display: none;
-}
-
-.filter-menu {
-  position: relative;
-}
-
-.filter-toggle {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px 0 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--ink);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  transition: transform 0.1s ease, background 0.15s ease;
-}
-
-.filter-toggle:hover {
-  background: rgba(255, 255, 255, 0.78);
-}
-.filter-toggle:active {
-  transform: scale(0.96);
-}
-
-.filter-toggle__icon {
-  width: 14px;
-  height: 14px;
-  color: var(--accent-strong);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.filter-menu.is-open .filter-toggle__icon {
-  transform: rotate(180deg) scale(1.1);
-}
-
-.filter-toggle__badge {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px #fff;
-}
-
-/* Popover desplegable */
-.filter-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  width: 212px;
-  padding: 7px;
-  border-radius: 16px;
-  transform-origin: top left;
-  opacity: 0;
-  transform: scale(0.85) translateY(-10px);
-  pointer-events: none;
-  transition: opacity 0.18s ease,
-    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.filter-menu.is-open .filter-popover {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  pointer-events: auto;
-}
-
-.filter-opt {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--ink-soft);
-  background: transparent;
-  border: none;
-  border-radius: 11px;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-
-.filter-opt:hover {
-  background: rgba(17, 40, 60, 0.06);
-}
-.filter-opt.is-active {
-  color: var(--ink);
-}
-
-.filter-opt__label {
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.filter-opt__check {
-  color: var(--accent-strong);
-  font-weight: 800;
-  opacity: 0;
-  transform: scale(0.5);
-  transition: opacity 0.15s ease,
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.filter-opt.is-active .filter-opt__check {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.filter-opt:not(.is-active) .chip__dot {
-  filter: grayscale(1);
-  opacity: 0.45;
-}
-
-/* Aparición escalonada de las opciones */
-.filter-menu.is-open .filter-opt {
-  animation: optIn 0.32s both;
-}
-.filter-menu.is-open .filter-opt:nth-child(1) {
-  animation-delay: 0.04s;
-}
-.filter-menu.is-open .filter-opt:nth-child(2) {
-  animation-delay: 0.09s;
-}
-.filter-menu.is-open .filter-opt:nth-child(3) {
-  animation-delay: 0.14s;
-}
-
-@keyframes optIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.chip__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px #fff;
-}
-
-.chip__dot--ok {
-  background: var(--color-ok);
-}
-.chip__dot--warn {
-  background: var(--color-warn);
-}
-.chip__dot--off {
-  background: var(--color-off);
 }
 
 /* ── Toast ────────────────────────────────────────────────────────────────── */
@@ -405,9 +249,6 @@ body {
   transition: transform 0.1s ease, background 0.15s ease;
 }
 
-.fab:hover {
-  background: rgba(255, 255, 255, 0.78);
-}
 .fab:active {
   transform: scale(0.96);
 }
@@ -491,7 +332,7 @@ body {
   text-align: left;
 }
 
-.nearby__toggle:hover {
+.nearby__toggle:active {
   background: rgba(17, 40, 60, 0.06);
 }
 
@@ -533,7 +374,7 @@ body {
   cursor: pointer;
 }
 
-.nearby__close:hover {
+.nearby__close:active {
   background: rgba(17, 40, 60, 0.08);
 }
 
@@ -560,7 +401,7 @@ body {
 
 .nearby__item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: center;
   width: 100%;
@@ -575,7 +416,6 @@ body {
   transition: background 0.12s ease;
 }
 
-.nearby__item:hover,
 .nearby__item:focus-visible {
   background: rgba(0, 133, 199, 0.1);
   outline: none;
@@ -615,29 +455,6 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.nearby__status {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: var(--radius-pill);
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #fff;
-  white-space: nowrap;
-}
-
-.nearby__status--ok {
-  background: var(--color-ok);
-}
-.nearby__status--warn {
-  background: var(--color-warn);
-}
-.nearby__status--off {
-  background: var(--color-off);
 }
 
 .nearby__empty {
@@ -690,7 +507,7 @@ body {
   cursor: pointer;
 }
 
-.sheet__close:hover {
+.sheet__close:active {
   background: rgba(17, 40, 60, 0.08);
 }
 
@@ -727,33 +544,25 @@ body {
   text-transform: capitalize;
 }
 
-.estado {
+.status-hint {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   margin-top: 14px;
-  padding: 5px 13px;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--ink);
+  background: rgba(17, 40, 60, 0.08);
+  border: 1px solid rgba(17, 40, 60, 0.08);
 }
 
-.estado__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.estado--ok {
-  background: var(--color-ok);
-}
-.estado--warn {
-  background: var(--color-warn);
-}
-.estado--off {
-  background: var(--color-off);
+.status-hint__icon {
+  flex: none;
+  opacity: 0.7;
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
 .sheet__amenities {
@@ -804,9 +613,6 @@ body {
   transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.sheet__btn:hover {
-  box-shadow: 0 6px 18px rgba(0, 133, 199, 0.45);
-}
 .sheet__btn:active {
   transform: scale(0.98);
 }
@@ -820,11 +626,6 @@ body {
   backdrop-filter: var(--glass-blur);
 }
 
-.sheet__btn--share:hover {
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: 0 4px 14px rgba(17, 40, 60, 0.14);
-}
-
 .sheet__source {
   margin: 12px 0 0;
   font-size: 0.72rem;
@@ -832,14 +633,49 @@ body {
   opacity: 0.8;
 }
 
-/* ── Marcador de ubicación del usuario ────────────────────────────────────── */
+/* ── Marcador de ubicación del usuario (estilo Apple Maps) ────────────────── */
 .user-marker {
-  width: 18px;
-  height: 18px;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+}
+
+.user-marker__pulse {
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
-  background: #1a73e8;
+  background: rgba(0, 122, 255, 0.35);
+  animation: user-pulse 2s ease-out infinite;
+}
+
+.user-marker__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #007aff;
   border: 3px solid #fff;
-  box-shadow: 0 0 0 6px rgba(26, 115, 232, 0.25);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  z-index: 1;
+}
+
+@keyframes user-pulse {
+  0% {
+    transform: scale(0.45);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.45);
+    opacity: 0;
+  }
 }
 
 /* ── Controles de MapLibre (glass) ────────────────────────────────────────── */
@@ -874,7 +710,7 @@ body {
    de MapLibre bajan para no quedar debajo de él. */
 @media (max-width: 700px) {
   .maplibregl-ctrl-top-right {
-    top: calc(max(12px, env(safe-area-inset-top)) + 100px);
+    top: calc(max(12px, env(safe-area-inset-top)) + 96px);
   }
 }
 
@@ -897,21 +733,48 @@ body {
   }
 }
 
+/* Hover solo con puntero fino (evita estados «pegados» en táctil) */
+@media (hover: hover) and (pointer: fine) {
+  .search__clear:hover {
+    background: rgba(17, 40, 60, 0.08);
+  }
+  .fab:hover {
+    background: rgba(255, 255, 255, 0.78);
+  }
+  .nearby__toggle:hover {
+    background: rgba(17, 40, 60, 0.06);
+  }
+  .nearby__close:hover {
+    background: rgba(17, 40, 60, 0.08);
+  }
+  .nearby__item:hover {
+    background: rgba(0, 133, 199, 0.1);
+  }
+  .sheet__close:hover {
+    background: rgba(17, 40, 60, 0.08);
+  }
+  .sheet__btn:hover {
+    box-shadow: 0 6px 18px rgba(0, 133, 199, 0.45);
+  }
+  .sheet__btn--share:hover {
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: 0 4px 14px rgba(17, 40, 60, 0.14);
+  }
+}
+
 /* Respeta la preferencia de menos animación */
 @media (prefers-reduced-motion: reduce) {
-  .filter-popover,
-  .filter-toggle__icon,
-  .filter-opt,
-  .filter-opt__check,
   .search__results,
   .sheet,
   .nearby,
   .nearby__body,
-  .nearby__chevron {
+  .nearby__chevron,
+  .user-marker__pulse {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
   }
-  .fab {
+  .fab,
+  .user-marker__pulse {
     animation: none;
   }
 }

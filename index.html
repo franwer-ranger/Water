@@ -39,42 +39,9 @@
         aria-label="Sugerencias" hidden></ul>
   </div>
 
-  <!-- Fila secundaria bajo el buscador: filtros + contador (compactos) -->
+  <!-- Contador de fuentes en el viewport (bajo el buscador) -->
   <div class="toolbar">
-  <div class="filter-menu" id="filter-menu">
-    <button type="button" class="filter-toggle glass" id="filter-toggle"
-            aria-expanded="false" aria-controls="filter-popover"
-            aria-label="Filtrar por estado">
-      <svg class="filter-toggle__icon" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-           stroke-linejoin="round" aria-hidden="true">
-        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-      </svg>
-      <span class="filter-toggle__label">Filtros</span>
-      <span class="filter-toggle__badge" id="filter-badge" hidden></span>
-    </button>
-
-    <div class="filter-popover glass" id="filter-popover" role="group"
-         aria-label="Filtrar por estado">
-      <button type="button" class="filter-opt is-active" data-cat="ok">
-        <span class="chip__dot chip__dot--ok"></span>
-        <span class="filter-opt__label">Operativas</span>
-        <span class="filter-opt__check" aria-hidden="true">✓</span>
-      </button>
-      <button type="button" class="filter-opt is-active" data-cat="warn">
-        <span class="chip__dot chip__dot--warn"></span>
-        <span class="filter-opt__label">Cerradas</span>
-        <span class="filter-opt__check" aria-hidden="true">✓</span>
-      </button>
-      <button type="button" class="filter-opt is-active" data-cat="off">
-        <span class="chip__dot chip__dot--off"></span>
-        <span class="filter-opt__label">Fuera de servicio</span>
-        <span class="filter-opt__check" aria-hidden="true">✓</span>
-      </button>
-    </div>
-  </div>
-
-  <span class="count glass" id="count" hidden></span>
+    <span class="count glass" id="count" hidden></span>
   </div>
 
   <!-- Mensajes transitorios -->
