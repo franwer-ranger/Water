@@ -85,4 +85,8 @@ export const CONFIG = {
     radius: 55,
     maxZoom: 16,
   },
+
+  // Lista de fuentes cercanas (haversine sobre features en memoria).
+  nearbyRadiusM: 800,
+  nearbyMaxResults: 10,
 };

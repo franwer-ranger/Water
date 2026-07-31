@@ -8,7 +8,7 @@ import {
   resolveFeatureById,
 } from "./data.js";
 import { addFuentesLayers, detailHtml, SOURCE_ID } from "./markers.js";
-import { setupGeolocation } from "./geolocation.js";
+import { setupGeolocation, getUserLatLng } from "./geolocation.js";
 import { setupSearch } from "./search.js";
 import { createStore } from "./store.js";
 import {
@@ -17,13 +17,25 @@ import {
   clearFountainFromUrl,
   shareFountain,
 } from "./share.js";
+import {
+  getNearbyFeatures,
+  formatDistance,
+  featureLabel,
+} from "./nearby.js";
 
 const countEl = document.getElementById("count");
 const toastEl = document.getElementById("toast");
 const sheetEl = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
+const nearbyEl = document.getElementById("nearby");
+const nearbyListEl = document.getElementById("nearby-list");
+const nearbyEmptyEl = document.getElementById("nearby-empty");
+const nearbyTitleEl = document.getElementById("nearby-title");
+const nearbyToggleEl = document.getElementById("nearby-toggle");
+const nearbyCloseEl = document.getElementById("nearby-close");
 let toastTimer;
 let sheetOpen = false;
+let nearbyVisible = false;
 
 // Estado compartido: features cargadas y filtros de estado activos. Los
 // filtros solo aplican a fuentes con estado real; las 'unknown' (OSM)
@@ -96,6 +108,112 @@ function focusFountain(map, feature) {
   openSheet(feature.properties, coords);
   const zoom = Math.max(map.getZoom(), 16);
   map.easeTo({ center: coords, zoom, offset: [0, -80] });
+}
+
+// ── Lista de fuentes cercanas ────────────────────────────────────────────────
+function statusShortLabel(props) {
+  const cat = props.statusCat;
+  if (cat === "ok") return props.statusText || "Operativa";
+  if (cat === "warn") return props.statusText || "Cerrada";
+  if (cat === "off") return props.statusText || "Fuera de servicio";
+  return null;
+}
+
+function setNearbyOpen(open, { expanded = true } = {}) {
+  if (!nearbyEl) return;
+  nearbyVisible = open;
+  nearbyEl.hidden = !open;
+  if (!open) return;
+  nearbyEl.classList.toggle("is-collapsed", !expanded);
+  if (nearbyToggleEl) {
+    nearbyToggleEl.setAttribute("aria-expanded", String(expanded));
+  }
+}
+
+function renderNearbyList(map) {
+  if (!nearbyVisible || !nearbyListEl || !nearbyEmptyEl) return;
+
+  const origin = getUserLatLng();
+  const state = store.get();
+  const items = origin
+    ? getNearbyFeatures(origin, state.features, state.activeCats)
+    : [];
+
+  const n = items.length;
+  if (nearbyTitleEl) {
+    nearbyTitleEl.textContent =
+      n === 0 ? "Sin fuentes cercanas" : `${n} cerca`;
+  }
+
+  nearbyListEl.replaceChildren();
+  if (n === 0) {
+    nearbyEmptyEl.hidden = false;
+    nearbyEmptyEl.textContent = `No hay fuentes en ~${CONFIG.nearbyRadiusM} m. Acércate o mueve el mapa para cargar más.`;
+    return;
+  }
+
+  nearbyEmptyEl.hidden = true;
+  const frag = document.createDocumentFragment();
+  for (const { feature, distanceM } of items) {
+    const props = feature.properties;
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "nearby__item";
+    btn.dataset.id = props.id || "";
+
+    const dist = document.createElement("span");
+    dist.className = "nearby__dist";
+    dist.textContent = formatDistance(distanceM);
+
+    const meta = document.createElement("span");
+    meta.className = "nearby__meta";
+    const label = document.createElement("span");
+    label.className = "nearby__label";
+    label.textContent = featureLabel(props);
+    meta.appendChild(label);
+    if (props.name && (props.address || props.area)) {
+      const sub = document.createElement("span");
+      sub.className = "nearby__sub";
+      sub.textContent = props.address || props.area;
+      meta.appendChild(sub);
+    }
+
+    btn.appendChild(dist);
+    btn.appendChild(meta);
+
+    const statusLabel = statusShortLabel(props);
+    if (statusLabel && props.statusCat !== "unknown") {
+      const status = document.createElement("span");
+      status.className = `nearby__status nearby__status--${props.statusCat}`;
+      status.textContent = statusLabel;
+      btn.appendChild(status);
+    }
+
+    btn.addEventListener("click", () => focusFountain(map, feature));
+    li.appendChild(btn);
+    frag.appendChild(li);
+  }
+  nearbyListEl.appendChild(frag);
+}
+
+function openNearbyList(map) {
+  setNearbyOpen(true, { expanded: true });
+  renderNearbyList(map);
+}
+
+function setupNearbyPanel(map) {
+  if (!nearbyEl) return;
+
+  nearbyToggleEl?.addEventListener("click", () => {
+    const collapsed = nearbyEl.classList.toggle("is-collapsed");
+    nearbyToggleEl.setAttribute("aria-expanded", String(!collapsed));
+  });
+
+  nearbyCloseEl?.addEventListener("click", () => {
+    // Cierra la lista; el marker de usuario se mantiene.
+    setNearbyOpen(false);
+  });
 }
 
 async function resolveDeepLink(map, link) {
@@ -178,6 +296,7 @@ function render(map, state) {
   );
   source.setData({ type: "FeatureCollection", features });
   updateViewportCount(map);
+  if (nearbyVisible) renderNearbyList(map);
 }
 
 // ── Carga de fuentes por viewport ────────────────────────────────────────────
@@ -328,6 +447,7 @@ function setupFilterMenu() {
     if (e.key === "Escape") {
       setOpen(false);
       if (sheetOpen) closeSheet();
+      else if (nearbyVisible) setNearbyOpen(false);
     }
   });
 }
@@ -357,8 +477,11 @@ function setupFilters() {
 async function main() {
   const map = initMap();
   const deepLink = readFountainLink();
-  setupGeolocation(map, document.getElementById("locate-btn"), showToast);
+  setupGeolocation(map, document.getElementById("locate-btn"), showToast, () => {
+    openNearbyList(map);
+  });
   setupSearch(map, showToast);
+  setupNearbyPanel(map);
 
   if (CONFIG.usingFallbackStyle) {
     console.warn(
@@ -398,7 +521,10 @@ async function main() {
       }
     }
 
-    map.on("moveend", () => updateViewportCount(map));
+    map.on("moveend", () => {
+      updateViewportCount(map);
+      if (nearbyVisible) renderNearbyList(map);
+    });
     map.on("moveend", debounce(() => refreshData(map), 400));
   });
 }

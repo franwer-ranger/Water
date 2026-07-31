@@ -86,6 +86,25 @@
     <span class="fab__label">Cerca de mí</span>
   </button>
 
+  <!-- Lista de fuentes cercanas (colapsable; se abre tras geolocalización) -->
+  <aside id="nearby" class="nearby glass" aria-label="Fuentes cercanas" hidden>
+    <div class="nearby__bar">
+      <button type="button" class="nearby__toggle" id="nearby-toggle"
+              aria-expanded="true" aria-controls="nearby-body">
+        <span class="nearby__title" id="nearby-title">Cercanas</span>
+        <span class="nearby__chevron" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="nearby__close" id="nearby-close"
+              aria-label="Cerrar lista de cercanas">&times;</button>
+    </div>
+    <div class="nearby__body" id="nearby-body">
+      <ul class="nearby__list" id="nearby-list" role="list"></ul>
+      <p class="nearby__empty" id="nearby-empty" hidden>
+        No hay fuentes en el radio. Acércate o mueve el mapa para cargar más.
+      </p>
+    </div>
+  </aside>
+
   <!-- Panel de detalle (bottom sheet, glass) -->
   <aside id="sheet" class="sheet glass" aria-label="Detalle de la fuente" hidden>
     <button type="button" id="sheet-close" class="sheet__close" aria-label="Cerrar">&times;</button>
