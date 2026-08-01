@@ -8,7 +8,7 @@ export const FOUNTAIN_COLOR = "#0085c7";
 export const SOURCE_ID = "fuentes";
 const DROP_IMAGE_ID = "fountain-drop";
 
-/** Canvas 64×64 con gota blanca (para symbol layer). */
+/** ImageData 64×64 con gota blanca (MapLibre addImage no acepta canvas). */
 function createDropImage() {
   const size = 64;
   const canvas = document.createElement("canvas");
@@ -24,7 +24,7 @@ function createDropImage() {
   ctx.closePath();
   ctx.fillStyle = "#ffffff";
   ctx.fill();
-  return canvas;
+  return ctx.getImageData(0, 0, size, size);
 }
 
 // Añade la fuente (source) GeoJSON con clustering y las capas de render.
