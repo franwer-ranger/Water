@@ -11,6 +11,7 @@ import { addFuentesLayers, detailHtml, SOURCE_ID } from "./markers.js";
 import { setupGeolocation, getUserLatLng } from "./geolocation.js";
 import { setupSearch } from "./search.js";
 import { createStore } from "./store.js";
+import { setupSplash } from "./splash.js";
 import {
   readFountainLink,
   setFountainInUrl,
@@ -406,6 +407,16 @@ function setupKeyboard() {
 }
 
 async function main() {
+  const splash = setupSplash();
+  // Tope de seguridad: Overpass puede tardar mucho o no responder, y el estilo
+  // del mapa podría no cargar nunca. Pasado este margen se destapa la app y el
+  // toast «Cargando fuentes…» sigue informando.
+  const splashFailsafe = setTimeout(() => splash.hide(), 6000);
+  const hideSplash = () => {
+    clearTimeout(splashFailsafe);
+    splash.hide();
+  };
+
   const map = initMap();
   const deepLink = readFountainLink();
   setupGeolocation(map, document.getElementById("locate-btn"), showToast, () => {
@@ -440,15 +451,20 @@ async function main() {
     // Los listeners de moveend se registran después: si no, jumpTo/easeTo
     // del deep link dispara otro fetchArea en paralelo → 429/504 y toast
     // falso de «fuente no encontrada».
-    if (deepLink) {
-      await resolveDeepLink(map, deepLink);
-      await refreshData(map);
-    } else {
-      showToast("Cargando fuentes…", true);
-      await refreshData(map);
-      if (store.get().features.length > 0) {
-        showToast("Toca un punto para ver los detalles.");
+    try {
+      if (deepLink) {
+        await resolveDeepLink(map, deepLink);
+        await refreshData(map);
+      } else {
+        showToast("Cargando fuentes…", true);
+        await refreshData(map);
+        if (store.get().features.length > 0) {
+          showToast("Toca un punto para ver los detalles.");
+        }
       }
+    } finally {
+      // Primera carga terminada (éxito o error): fuera el splash.
+      hideSplash();
     }
 
     map.on("moveend", () => {

@@ -15,6 +15,19 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <!-- Pantalla de carga inicial: se elimina del DOM tras la primera carga -->
+  <div id="splash" class="splash" role="status" aria-live="polite">
+    <div class="splash__logo">
+      <svg class="splash__drop" viewBox="29 20 42 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M50 21 C50 21 30.1 44.2 30.1 59.1 a19.9 19.9 0 0 0 39.8 0 C69.9 44.2 50 21 50 21 Z"
+              fill="#ffffff" />
+      </svg>
+      <span class="splash__shadow" aria-hidden="true"></span>
+      <p class="splash__name">Fountly</p>
+    </div>
+    <span class="splash__sr">Cargando fuentes de agua potable…</span>
+  </div>
+
   <!-- Mapa a pantalla completa -->
   <div id="map" role="application" aria-label="Mapa de fuentes de agua potable"></div>
 

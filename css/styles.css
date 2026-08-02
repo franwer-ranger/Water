@@ -40,6 +40,109 @@ body {
   inset: 0;
 }
 
+/* ── Pantalla de carga inicial ────────────────────────────────────────────── */
+/* Solo al abrir la app: dura como mínimo 2 s y se va cuando termina la primera
+   carga de datos (con o sin error). El JS le añade `is-hidden` y la elimina. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #5ed0f2 0%, #0085c7 52%, #00527f 100%);
+  transition: opacity 0.42s ease, visibility 0.42s ease;
+}
+
+.splash.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash__logo {
+  display: grid;
+  justify-items: center;
+  width: min(150px, 34vw);
+}
+
+/* La gota rebota sobre la línea de suelo (transform-origin abajo para que el
+   aplastamiento del impacto salga natural). */
+.splash__drop {
+  width: 100%;
+  height: auto;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 8px 16px rgba(0, 40, 70, 0.25));
+  animation: splash-bounce 1.15s infinite;
+}
+
+.splash__shadow {
+  width: 52%;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: rgba(0, 40, 70, 0.4);
+  filter: blur(4px);
+  animation: splash-shadow 1.15s infinite;
+}
+
+.splash__name {
+  margin: 26px 0 0;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  opacity: 0.94;
+}
+
+.splash__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes splash-bounce {
+  /* caída acelerada (gravedad) */
+  0% {
+    transform: translateY(-42%) scale(0.93, 1.08);
+    animation-timing-function: cubic-bezier(0.5, 0, 1, 0.5);
+  }
+  42% {
+    transform: translateY(0) scale(1, 1);
+    animation-timing-function: ease-out;
+  }
+  /* impacto: se aplasta contra el suelo */
+  50% {
+    transform: translateY(3%) scale(1.22, 0.78);
+    animation-timing-function: ease-in;
+  }
+  58% {
+    transform: translateY(0) scale(1, 1);
+    animation-timing-function: cubic-bezier(0, 0.5, 0.5, 1);
+  }
+  /* rebote hacia arriba */
+  100% {
+    transform: translateY(-42%) scale(0.93, 1.08);
+  }
+}
+
+@keyframes splash-shadow {
+  0% {
+    transform: scale(0.62);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0.62);
+    opacity: 0.3;
+  }
+}
+
 /* ── Glassmorphism base ───────────────────────────────────────────────────── */
 .glass {
   background: var(--glass-bg);
@@ -798,7 +901,12 @@ body {
     animation-duration: 0.01ms;
   }
   .fab,
-  .user-marker__pulse {
+  .user-marker__pulse,
+  .splash__drop,
+  .splash__shadow {
     animation: none;
+  }
+  .splash {
+    transition-duration: 0.01ms;
   }
 }
