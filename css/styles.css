@@ -73,11 +73,24 @@ body {
   background: rgba(255, 255, 255, 0.85);
 }
 
+/* Iconos outline (Heroicons) + gota custom: color vía currentColor */
+.icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  color: var(--accent);
+}
+.icon--sm {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
 .search__icon {
   width: 18px;
   height: 18px;
   flex: none;
-  color: var(--ink-soft);
+  color: var(--accent);
 }
 
 .search__input {
@@ -95,12 +108,14 @@ body {
 }
 
 .search__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
   width: 32px;
   height: 32px;
-  font-size: 1.3rem;
-  line-height: 1;
-  color: var(--ink-soft);
+  padding: 0;
+  color: var(--accent);
   background: transparent;
   border: none;
   border-radius: 50%;
@@ -256,8 +271,9 @@ body {
   cursor: progress;
 }
 .fab__icon {
-  font-size: 1.15rem;
-  line-height: 1;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--accent);
 }
 .fab.is-loading .fab__icon {
   animation: pulse 1s ease-in-out infinite;
@@ -347,27 +363,25 @@ body {
 
 .nearby__chevron {
   flex: none;
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid var(--ink-soft);
-  border-bottom: 2px solid var(--ink-soft);
-  transform: rotate(45deg);
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--accent);
   transition: transform 0.2s ease;
-  margin-top: -4px;
 }
 
 .nearby.is-collapsed .nearby__chevron {
-  transform: rotate(-135deg);
-  margin-top: 4px;
+  transform: rotate(180deg);
 }
 
 .nearby__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
   width: 36px;
   height: 36px;
-  font-size: 1.35rem;
-  line-height: 1;
-  color: var(--ink-soft);
+  padding: 0;
+  color: var(--accent);
   background: transparent;
   border: none;
   border-radius: 50%;
@@ -496,11 +510,13 @@ body {
   position: absolute;
   top: 10px;
   right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
-  font-size: 1.4rem;
-  line-height: 1;
-  color: var(--ink-soft);
+  padding: 0;
+  color: var(--accent);
   background: transparent;
   border: none;
   border-radius: 50%;
@@ -518,9 +534,10 @@ body {
 }
 
 .sheet__icon {
-  font-size: 1.7rem;
-  line-height: 1;
+  width: 1.7rem;
+  height: 1.7rem;
   flex: 0 0 auto;
+  color: var(--accent);
 }
 
 .sheet__title {
@@ -560,9 +577,7 @@ body {
 
 .status-hint__icon {
   flex: none;
-  opacity: 0.7;
-  font-size: 0.85rem;
-  line-height: 1;
+  color: var(--accent);
 }
 
 .sheet__amenities {
@@ -611,6 +626,14 @@ body {
   box-shadow: 0 4px 14px rgba(0, 133, 199, 0.35);
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+/* En CTA primary el icono hereda blanco; en share (glass) usa accent */
+.sheet__btn .icon {
+  color: currentColor;
+}
+.sheet__btn--share .icon {
+  color: var(--accent);
 }
 
 .sheet__btn:active {
@@ -729,7 +752,8 @@ body {
     display: none;
   }
   .fab__icon {
-    font-size: 1.4rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 }
 

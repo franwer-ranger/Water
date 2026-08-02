@@ -21,11 +21,10 @@
   <!-- Buscador de zonas (glass): el elemento principal, arriba en el centro -->
   <div class="search" id="search">
     <div class="search__box glass">
-      <svg class="search__icon" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-           stroke-linejoin="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="21" y1="21" x2="16.2" y2="16.2"></line>
+      <svg class="search__icon icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+           viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
       </svg>
       <input id="search-input" class="search__input" type="search"
              placeholder="Buscar ciudad o zona…" autocomplete="off"
@@ -33,7 +32,12 @@
              aria-controls="search-listbox" aria-autocomplete="list"
              aria-label="Buscar ciudad o zona" />
       <button type="button" class="search__clear" id="search-clear"
-              aria-label="Borrar búsqueda" hidden>&times;</button>
+              aria-label="Borrar búsqueda" hidden>
+        <svg class="icon icon--sm" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
     <ul class="search__results glass" id="search-listbox" role="listbox"
         aria-label="Sugerencias" hidden></ul>
@@ -49,7 +53,12 @@
 
   <!-- Botón "Cerca de mí" -->
   <button type="button" id="locate-btn" class="fab glass" title="Buscar fuentes cerca de mí" aria-label="Buscar fuentes cerca de mí">
-    <span class="fab__icon" aria-hidden="true">📍</span>
+    <svg class="fab__icon icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0z" />
+    </svg>
     <span class="fab__label">Cerca de mí</span>
   </button>
 
@@ -59,10 +68,18 @@
       <button type="button" class="nearby__toggle" id="nearby-toggle"
               aria-expanded="true" aria-controls="nearby-body">
         <span class="nearby__title" id="nearby-title">Cercanas</span>
-        <span class="nearby__chevron" aria-hidden="true"></span>
+        <svg class="nearby__chevron icon icon--sm" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+        </svg>
       </button>
       <button type="button" class="nearby__close" id="nearby-close"
-              aria-label="Cerrar lista de cercanas">&times;</button>
+              aria-label="Cerrar lista de cercanas">
+        <svg class="icon icon--sm" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
     <div class="nearby__body" id="nearby-body">
       <ul class="nearby__list" id="nearby-list" role="list"></ul>
@@ -74,7 +91,12 @@
 
   <!-- Panel de detalle (bottom sheet, glass) -->
   <aside id="sheet" class="sheet glass" aria-label="Detalle de la fuente" hidden>
-    <button type="button" id="sheet-close" class="sheet__close" aria-label="Cerrar">&times;</button>
+    <button type="button" id="sheet-close" class="sheet__close" aria-label="Cerrar">
+      <svg class="icon icon--sm" xmlns="http://www.w3.org/2000/svg" fill="none"
+           viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
     <div class="sheet__handle" aria-hidden="true"></div>
     <div id="sheet-body"></div>
   </aside>

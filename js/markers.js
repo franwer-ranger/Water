@@ -1,6 +1,7 @@
 import { CONFIG } from "./config.js";
 import { normalizeAmenities } from "./amenities.js";
 import { getUserLatLng } from "./geolocation.js";
+import { icon } from "./icons.js";
 
 // Color unificado de marca para todas las fuentes (Madrid y OSM).
 export const FOUNTAIN_COLOR = "#0085c7";
@@ -131,7 +132,7 @@ export function detailHtml(props, coords) {
   const cat = props.statusCat || "unknown";
   const parts = [];
   parts.push('<div class="sheet__head">');
-  parts.push('<span class="sheet__icon" aria-hidden="true">💧</span>');
+  parts.push(icon("drop", "sheet__icon icon"));
   parts.push("<div>");
   parts.push(
     `<h2 class="sheet__title">${escapeHtml(
@@ -147,9 +148,10 @@ export function detailHtml(props, coords) {
   const hint = statusHint(cat);
   if (hint) {
     parts.push(
-      `<span class="status-hint"><span class="status-hint__icon" aria-hidden="true">⚠</span>${escapeHtml(
-        hint
-      )}</span>`
+      `<span class="status-hint">${icon(
+        "exclamationTriangle",
+        "status-hint__icon icon icon--sm"
+      )}${escapeHtml(hint)}</span>`
     );
   }
 
@@ -170,7 +172,7 @@ export function detailHtml(props, coords) {
   const url = directionsUrl(coords[1], coords[0]);
   actions.push(
     `<a class="sheet__btn" href="${url}" target="_blank" rel="noopener">` +
-      '<span aria-hidden="true">🧭</span> Cómo llegar</a>'
+      `${icon("map", "icon icon--sm")} Cómo llegar</a>`
   );
   if (props.id) {
     const lng = coords[0];
@@ -181,7 +183,7 @@ export function detailHtml(props, coords) {
         `data-share-id="${escapeAttr(props.id)}" ` +
         `data-share-lng="${lng}" data-share-lat="${lat}" ` +
         `data-share-title="${escapeAttr(title)}">` +
-        '<span aria-hidden="true">🔗</span> Compartir</button>'
+        `${icon("share", "icon icon--sm")} Compartir</button>`
     );
   }
   parts.push(`<div class="sheet__actions">${actions.join("")}</div>`);
